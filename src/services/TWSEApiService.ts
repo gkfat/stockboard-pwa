@@ -7,8 +7,6 @@ import type {
 } from '@/types/twse-api';
 
 class TWSEApiService {
-  private readonly API_BASE = '/api/twse/getStockInfo';
-
   /**
    * 將 TWSE 原始資料轉換為處理後的股票資訊
    */
@@ -42,7 +40,7 @@ class TWSEApiService {
   private buildApiUrl(stockCodes: string | string[]): string {
     const codes = Array.isArray(stockCodes) ? stockCodes : [stockCodes];
     const exchangeCodes = codes.map(code => `tse_${code}.tw`).join('|');
-    return `${this.API_BASE}?ex_ch=${exchangeCodes}`;
+    return `/api/twse/getStockInfo?ex_ch=${exchangeCodes}`;
   }
 
   /**
