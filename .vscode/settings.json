@@ -1,0 +1,45 @@
+{
+  "eslint.codeActionsOnSave.mode": "all",
+  "files.eol": "\n",
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": true,
+  "editor.tabSize": 2,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+  "eslint.useFlatConfig": true,
+  "eslint.format.enable": true,
+  "eslint.enable": true,
+  "eslint.run": "onType",
+  "eslint.workingDirectories": ["."],
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "vue"
+  ],
+  "editor.formatOnSave": true,
+  "problems.showNearbyFilesSourceLanguage": true,
+  "problems.decorations.enabled": true,
+  "editor.renderWhitespace": "boundary",
+  "editor.showFoldingControls": "always",
+  "[vue]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "i18n-ally.localesPaths": [
+    "src/locales"
+  ],
+  "i18n-ally.keystyle": "nested",
+  "i18n-ally.sortKeys": true,
+  "cSpell.words": [
+    "watchlist"
+  ]
+}
