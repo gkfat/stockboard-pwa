@@ -7,7 +7,7 @@ import type {
 } from '@/types/twse-api';
 
 class TWSEApiService {
-  private readonly API_BASE = '/api/twse/getStockInfo.jsp';
+  private readonly API_BASE = '/api/twse/getStockInfo';
 
   /**
    * 將 TWSE 原始資料轉換為處理後的股票資訊

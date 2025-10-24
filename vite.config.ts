@@ -9,11 +9,11 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   server: {
     proxy: {
-      '/api/twse': {
-        target: 'https://mis.twse.com.tw',
+      '/api/twse/getStockInfo': {
+        target: 'https://mis.twse.com.tw/stock/api/getStockInfo.jsp',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/api\/twse/, '/stock/api')
+        rewrite: (path) => path.replace(/^\/api\/twse\/getStockInfo/, '')
       }
     }
   },
