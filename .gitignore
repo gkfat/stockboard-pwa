@@ -97,5 +97,6 @@ certs/
 !env.d.ts
 *.tsbuildinfo
 *.js
+!functions/**/*.js
 
 tmp_rovodev_*
