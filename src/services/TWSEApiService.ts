@@ -36,15 +36,15 @@ class TWSEApiService {
 
   /**
    * 取得 API 基礎 URL
-   * 開發環境使用 Vite proxy，生產環境直接呼叫 TWSE API
+   * 開發環境使用 Vite proxy，生產環境使用 serverless function
    */
   private getBaseUrl(): string {
     // 開發環境使用 proxy
     if (import.meta.env.DEV) {
       return '/api';
     }
-    // 生產環境直接呼叫 TWSE API
-    return 'https://mis.twse.com.tw/stock/api';
+    // 生產環境使用 serverless function (避免 CORS)
+    return '/api/twse';
   }
 
   /**
@@ -55,7 +55,13 @@ class TWSEApiService {
     const exchangeCodes = codes.map(code => `tse_${code}.tw`).join('|');
     const baseUrl = this.getBaseUrl();
 
-    return `${baseUrl}/getStockInfo.jsp?ex_ch=${exchangeCodes}`;
+    // 開發環境: proxy 到 TWSE API
+    if (import.meta.env.DEV) {
+      return `${baseUrl}/getStockInfo.jsp?ex_ch=${exchangeCodes}`;
+    }
+    
+    // 生產環境: 使用 serverless function
+    return `${baseUrl}/getStockInfo?ex_ch=${exchangeCodes}`;
   }
 
   /**
