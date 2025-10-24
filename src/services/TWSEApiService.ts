@@ -35,12 +35,27 @@ class TWSEApiService {
   }
 
   /**
+   * 取得 API 基礎 URL
+   * 開發環境使用 Vite proxy，生產環境直接呼叫 TWSE API
+   */
+  private getBaseUrl(): string {
+    // 開發環境使用 proxy
+    if (import.meta.env.DEV) {
+      return '/api';
+    }
+    // 生產環境直接呼叫 TWSE API
+    return 'https://mis.twse.com.tw/stock/api';
+  }
+
+  /**
    * 建立 TWSE API 請求 URL
    */
   private buildApiUrl(stockCodes: string | string[]): string {
     const codes = Array.isArray(stockCodes) ? stockCodes : [stockCodes];
     const exchangeCodes = codes.map(code => `tse_${code}.tw`).join('|');
-    return `/api/twse/getStockInfo?ex_ch=${exchangeCodes}`;
+    const baseUrl = this.getBaseUrl();
+
+    return `${baseUrl}/getStockInfo.jsp?ex_ch=${exchangeCodes}`;
   }
 
   /**

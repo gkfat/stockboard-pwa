@@ -1,21 +1,19 @@
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vuetify from 'vite-plugin-vuetify';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 
-export default defineConfig(({ command, mode }) => {
-  // 載入環境變數
-  const env = loadEnv(mode, process.cwd(), '');
+export default defineConfig(() => {
   
   return {
     server: {
       proxy: {
-        '/api/twse/getStockInfo': {
-          target: `${env.VITE_DEV_PROXY_TARGET}/stock/api/getStockInfo.jsp`,
+        '/api': {
+          target: 'https://mis.twse.com.tw/stock/api',
           changeOrigin: true,
           secure: true,
-          rewrite: (path) => path.replace(/^\/api\/twse\/getStockInfo/, '')
+          rewrite: (path) => path.replace(/^\/api/, '')
         }
       }
     },
@@ -30,9 +28,9 @@ export default defineConfig(({ command, mode }) => {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}']
         },
         manifest: {
-          name: env.VITE_APP_TITLE || 'StockBoard PWA',
+          name: 'StockBoard',
           short_name: 'StockBoard',
-          description: env.VITE_APP_DESCRIPTION || 'Vue3 台股即時自選股觀察 PWA',
+          description: '台股即時自選股觀察',
           theme_color: '#1976d2',
           background_color: '#ffffff',
           display: 'standalone',
