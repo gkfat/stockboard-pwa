@@ -43,9 +43,10 @@ export class StockDB extends Dexie {
       trades: '++id, ticker, traded_at, direction, created_at'
     }).upgrade(tx => {
       // 為現有記錄添加 index 欄位
-      return tx.table('watchlist').toCollection().modify((record, ref) => {
+      let index = 0;
+      return tx.table('watchlist').toCollection().modify((record: WatchListItem) => {
         if (record.index === undefined) {
-          record.index = ref.primaryKey as number || 0;
+          record.index = index++;
         }
       });
     });

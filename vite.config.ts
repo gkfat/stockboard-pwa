@@ -20,10 +20,7 @@ export default defineConfig({
   plugins: [
     vue(),
     vuetify({
-      autoImport: true,
-      theme: {
-        defaultTheme: 'light'
-      }
+      autoImport: true
     }),
     VitePWA({
       registerType: 'autoUpdate',

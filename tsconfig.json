@@ -11,13 +11,14 @@
     "sourceMap": false,
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "lib": [
       "esnext",
       "dom"
     ],
     "types": [
       "node",
-      "vuetify",
       "vite/client"
     ],
     "paths": {
