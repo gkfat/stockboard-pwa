@@ -115,25 +115,13 @@
 
 <script setup lang="ts">
 import { StockPosition, TotalPnL } from '@/types/trading';
+import { FormatUtil } from '@/utils/formatUtil';
 
 const totalPnL = defineModel<TotalPnL>('totalPnL', { required: true });
 const positions = defineModel<StockPosition[]>('positions', { required: true });
 
-// 格式化貨幣
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('zh-TW', {
-    style: 'currency',
-    currency: 'TWD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(amount);
-};
-
-// 格式化百分比
-const formatPercentage = (percentage: number): string => {
-  const sign = percentage > 0 ? '+' : '';
-  return `${sign}${percentage.toFixed(2)}%`;
-};
+// 使用統一的格式化工具
+const { formatCurrency, formatPercentage } = FormatUtil;
 
 // 取得損益顏色
 const getPnLColor = (amount: number): string => {

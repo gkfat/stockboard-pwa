@@ -157,6 +157,7 @@ import {
 import { useStockPrice } from '@/composables/useStockPrice';
 import { useStock } from '@/composables/useStock';
 import { StockUtil } from '@/utils/stock';
+import { FormatUtil } from '@/utils/formatUtil';
 
 const showDialog = defineModel<boolean>('showStockDetailDialog');
 const stock = defineModel<StockInfo | null>('stock', {default: null});
@@ -299,19 +300,12 @@ const loadChartData = async () => {
   }
 };
 
-// 格式化函數
-const formatPrice = (price: number): string => {
-  return price.toFixed(2);
-};
+// 使用統一的格式化工具
+const { formatPrice, formatChange } = FormatUtil;
 
-const formatChange = (change: number): string => {
-  const sign = change >= 0 ? '+' : '';
-  return `${sign}${change.toFixed(2)}`;
-};
-
+// 百分比格式化（保持原有命名）
 const formatPercent = (percent: number): string => {
-  const sign = percent >= 0 ? '+' : '';
-  return `${sign}${percent.toFixed(2)}%`;
+  return FormatUtil.formatPercentage(percent);
 };
 
 const getChangeIcon = (change: number): string => {

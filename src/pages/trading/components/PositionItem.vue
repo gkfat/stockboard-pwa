@@ -88,6 +88,7 @@
 <script setup lang="ts">
 import { useStockStore } from '@/composables/useStockStore';
 import type { StockPosition } from '@/types/trading';
+import { FormatUtil } from '@/utils/formatUtil';
 
 // Emits
 defineEmits<{
@@ -99,26 +100,8 @@ const position = defineModel<StockPosition>({required: true});
 // Composables
 const { getStockData } = useStockStore();
 
-// 格式化價格（到小數點第二位）
-const formatPrice = (price: number): string => {
-  return `$${price.toFixed(2)}`;
-};
-
-// 格式化貨幣
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('zh-TW', {
-    style: 'currency',
-    currency: 'TWD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(amount);
-};
-
-// 格式化百分比
-const formatPercentage = (percentage: number): string => {
-  const sign = percentage > 0 ? '+' : '';
-  return `${sign}${percentage.toFixed(2)}%`;
-};
+// 使用統一的格式化工具
+const { formatPrice, formatCurrency, formatPercentage } = FormatUtil;
 
 // 取得股票目前價格
 const getCurrentPrice = (ticker: string): number => {

@@ -195,6 +195,7 @@ import { useTradingData } from '@/composables/useTradingData';
 import { useStockDetail } from '@/composables/useStockDetail';
 import { TradingCalculator } from '@/utils/tradingCalculator';
 import { DateUtils } from '@/utils/dateUtils';
+import { FormatUtil } from '@/utils/formatUtil';
 import type { TradeDirection, TradingFeeResult } from '@/types/trading';
 
 const emit = defineEmits<{
@@ -368,14 +369,8 @@ const fetchStockInfo = async () => {
   }
 };
 
-// 格式化貨幣
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('zh-TW', {
-    style: 'currency',
-    currency: 'TWD',
-    minimumFractionDigits: 0
-  }).format(amount);
-};
+// 使用統一的格式化工具
+const { formatCurrency } = FormatUtil;
 
 // 更新 model value
 const updateModelValue = (value: boolean) => {

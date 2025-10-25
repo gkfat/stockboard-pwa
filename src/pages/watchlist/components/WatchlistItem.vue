@@ -82,6 +82,7 @@
 import { computed } from 'vue';
 import type { StockInfo } from '@/types/stock';
 import { StockUtil } from '@/utils/stock';
+import { FormatUtil } from '@/utils/formatUtil';
 
 // Emits
 defineEmits<{
@@ -103,27 +104,14 @@ const changeIcon = computed(() => {
 });
 
 // 格式化函數
-const formatPrice = (price: number): string => {
-  return price.toFixed(2);
-};
-
-const formatChange = (change: number): string => {
-  const sign = change >= 0 ? '+' : '';
-  return `${sign}${change.toFixed(2)}`;
-};
+const { formatPrice, formatChange, formatPercentage, formatLargeNumber } = FormatUtil;
 
 const formatPercent = (percent: number): string => {
-  const sign = percent >= 0 ? '+' : '';
-  return `${sign}${percent.toFixed(2)}%`;
+  return formatPercentage(percent);
 };
 
 const formatVolume = (volume: number): string => {
-  if (volume >= 1000000) {
-    return `${(volume / 1000000).toFixed(1)}M`;
-  } else if (volume >= 1000) {
-    return `${(volume / 1000).toFixed(1)}K`;
-  }
-  return volume.toString();
+  return formatLargeNumber(volume);
 };
 </script>
 

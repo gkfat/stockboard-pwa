@@ -99,6 +99,7 @@
 import { ref, watch } from 'vue';
 import { useStock } from '@/composables/useStock';
 import { useWatchlistState } from '@/composables/useWatchlistState';
+import { FormatUtil } from '@/utils/formatUtil';
 import { useWatchlistActions } from '@/composables/useWatchlistActions';
 import type { StockInfo } from '@/types/stock';
 import { StockUtil } from '@/utils/stock';
@@ -186,14 +187,7 @@ const closeDialog = () => {
 };
 
 // 格式化函數
-const formatPrice = (price: number): string => {
-  return price.toFixed(2);
-};
-
-const formatChange = (change: number): string => {
-  const sign = change >= 0 ? '+' : '';
-  return `${sign}${change.toFixed(2)}`;
-};
+const { formatPrice, formatChange } = FormatUtil;
 
 // 監聽股票代號變化，自動搜尋
 watch(stockCode, (newCode) => {
