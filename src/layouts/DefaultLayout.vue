@@ -5,12 +5,7 @@
     
     <!-- Main Content -->
     <v-main>
-      <v-container
-        fluid
-        class="pa-0"
-      >
-        <router-view />
-      </v-container>
+      <router-view />
     </v-main>
     
     <!-- Bottom Navigation -->
@@ -25,6 +20,6 @@ import BottomNav from './components/BottomNav.vue';
 
 <style scoped>
 .v-main {
-  padding-bottom: 56px; /* 為 bottom navigation 預留空間 */
+  margin-bottom: 100px;
 }
 </style>

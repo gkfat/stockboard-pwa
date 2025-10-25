@@ -71,7 +71,6 @@ export class StockDB extends Dexie {
     try {
       logger.log('Getting all trades');
       const trades = await this.trades.orderBy('traded_at').reverse().toArray();
-      logger.log('Retrieved trades count:', trades.length);
       return trades;
     } catch (error) {
       logger.error('getAllTrades', error);
