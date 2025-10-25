@@ -56,3 +56,11 @@ export interface TradingFeeResult {
   tax: number;                // 交易稅
   totalCost: number;          // 總成本
 }
+
+// 交易摘要結果 (用於 UI 顯示)
+export interface TradingSummaryResult {
+  fee: string;                // 格式化手續費
+  tax: string;                // 格式化交易稅
+  total: string;              // 格式化總金額
+  totalValue: number;         // 原始總金額數值
+}

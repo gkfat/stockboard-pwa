@@ -20,7 +20,6 @@ export function useStockDetail() {
     stockInfo.value = null;
 
     try {
-      console.log(`[useStockDetail] 透過 stockDataService 取得: ${stockCode}`);
       const data = await stockDataService.getSingleStock(stockCode);
       stockInfo.value = data;
     } catch (err) {

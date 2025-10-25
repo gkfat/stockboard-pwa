@@ -65,6 +65,40 @@ export class StockDB extends Dexie {
       return false;
     }
   }
+
+  // 交易記錄相關方法
+  async getAllTrades(): Promise<TradeRecord[]> {
+    try {
+      logger.log('Getting all trades');
+      const trades = await this.trades.orderBy('traded_at').reverse().toArray();
+      logger.log('Retrieved trades count:', trades.length);
+      return trades;
+    } catch (error) {
+      logger.error('getAllTrades', error);
+      throw error;
+    }
+  }
+
+  async addTrade(tradeData: Omit<TradeRecord, 'id'>): Promise<TradeRecord> {
+    try {
+      logger.log('Adding trade', tradeData);
+      const id = await this.trades.add({
+        ...tradeData,
+        created_at: new Date().toISOString()
+      } as TradeRecord);
+      
+      const newTrade = await this.trades.get(id);
+      if (!newTrade) {
+        throw new Error('Failed to retrieve newly added trade');
+      }
+      
+      logger.log('Trade added successfully', newTrade);
+      return newTrade;
+    } catch (error) {
+      logger.error('addTrade', error);
+      throw error;
+    }
+  }
 }
 
 // DB 實例

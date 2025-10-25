@@ -47,8 +47,6 @@ export async function onRequest(context) {
     // 建立 TWSE API 請求
     const twseUrl = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${encodeURIComponent(ex_ch)}`;
     
-    console.log(`[TWSE Proxy] 請求: ${twseUrl}`);
-    
     // 發送請求到 TWSE API
     const response = await fetch(twseUrl, {
       method: 'GET',
@@ -66,8 +64,6 @@ export async function onRequest(context) {
     // 取得回應資料
     const data = await response.text();
     
-    console.log(`[TWSE Proxy] 成功取得資料，長度: ${data.length}`);
-
     // 回傳資料並設定 CORS headers
     return new Response(data, {
       status: 200,
