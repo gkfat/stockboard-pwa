@@ -199,7 +199,7 @@ import { FormatUtil } from '@/utils/formatUtil';
 import type { TradeDirection, TradingFeeResult } from '@/types/trading';
 
 const emit = defineEmits<{
-  'trade-added': [];
+  'tradeAdded': [];
 }>();
 // Props & Emits
 const modelValue = defineModel<boolean>({ required: true });
@@ -434,7 +434,7 @@ const submitTrade = async () => {
     const success = await addTrade(tradeData);
     
     if (success) {
-      emit('trade-added');
+      emit('tradeAdded');
       closeDialog();
     }
   } catch (error) {
