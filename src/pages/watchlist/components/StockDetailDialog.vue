@@ -24,7 +24,7 @@
 
       <v-card-text>
         <!-- 股價資訊摘要 -->
-        <v-row class="mb-4">
+        <v-row class="mb-3">
           <v-col cols="6">
             <v-card variant="tonal">
               <v-card-text class="text-center">
@@ -42,7 +42,8 @@
               <v-card-text class="text-center">
                 <v-chip
                   :color="getPnLColor(stock.change)"
-                  variant="text"
+                  variant="elevated"
+                  size="large"
                 >
                   <v-icon
                     start
@@ -61,77 +62,124 @@
           </v-col>
         </v-row>
 
-        <!-- 圖表切換按鈕 -->
-        <v-btn-toggle
-          v-model="chartType"
-          mandatory
-          variant="outlined"
-          class="mb-4"
-        >
-          <v-btn value="price">
-            <v-icon start>
-              mdi-chart-line
-            </v-icon>
-            價格走勢
-          </v-btn>
-          <v-btn value="volume">
-            <v-icon start>
-              mdi-chart-bar
-            </v-icon>
-            成交量
-          </v-btn>
-        </v-btn-toggle>
-
-        <!-- 圖表容器 -->
+        <!-- 圖表 Tabs + Chart 區塊 -->
         <v-card
           variant="outlined"
-          class="chart-container"
-          min-height="400"
+          class="mt-2"
         >
-          <v-card-text>
-            <div
-              v-if="loading"
-              class="text-center pa-8"
-            >
-              <v-progress-circular indeterminate />
-              <div class="mt-2">
-                載入圖表資料中...
-              </div>
-            </div>
-            
-            <div
-              v-else-if="!hasChartData"
-              class="text-center pa-8"
-            >
-              <v-icon
-                size="64"
-                color="grey-lighten-1"
-              >
-                mdi-chart-line-variant
+          <!-- Tab 選單 -->
+          <v-tabs
+            v-model="chartType"
+            bg-color="surface"
+            grow
+          >
+            <v-tab value="price">
+              <v-icon start>
+                mdi-chart-line
               </v-icon>
-              <div class="text-h6 mt-4">
-                暫無圖表資料
-              </div>
-              <div class="text-body-2 text-medium-emphasis">
-                開市時間會自動記錄價格走勢
-              </div>
-            </div>
-            
-            <canvas
-              v-else
-              ref="chartCanvas"
-              class="chart-canvas"
-            />
-          </v-card-text>
+              價格走勢
+            </v-tab>
+            <v-tab value="volume">
+              <v-icon start>
+                mdi-chart-bar
+              </v-icon>
+              成交量
+            </v-tab>
+          </v-tabs>
+
+          <v-divider />
+
+          <!-- Tab 對應視圖 -->
+          <v-tabs-window v-model="chartType">
+            <!-- 價格走勢 -->
+            <v-tabs-window-item value="price">
+              <v-card-text
+                class="chart-container"
+                min-height="400"
+              >
+                <template v-if="loading">
+                  <div class="text-center pa-8">
+                    <v-progress-circular indeterminate />
+                    <div class="mt-2">
+                      載入圖表資料中...
+                    </div>
+                  </div>
+                </template>
+
+                <template v-else-if="!hasChartData">
+                  <div class="text-center pa-8">
+                    <v-icon
+                      size="64"
+                      color="grey-lighten-1"
+                    >
+                      mdi-chart-line-variant
+                    </v-icon>
+                    <div class="text-h6 mt-4">
+                      暫無圖表資料
+                    </div>
+                    <div class="text-body-2 text-medium-emphasis">
+                      開市時間會自動記錄價格走勢
+                    </div>
+                  </div>
+                </template>
+
+                <canvas
+                  v-else
+                  ref="chartCanvas"
+                  class="chart-canvas"
+                />
+              </v-card-text>
+            </v-tabs-window-item>
+
+            <!-- 成交量變化 -->
+            <v-tabs-window-item value="volume">
+              <v-card-text
+                class="chart-container"
+                min-height="400"
+              >
+                <!-- 內容完全共用，只依圖表類型 render -->
+                <template v-if="loading">
+                  <div class="text-center pa-8">
+                    <v-progress-circular indeterminate />
+                    <div class="mt-2">
+                      載入圖表資料中...
+                    </div>
+                  </div>
+                </template>
+
+                <template v-else-if="!hasChartData">
+                  <div class="text-center pa-8">
+                    <v-icon
+                      size="64"
+                      color="grey-lighten-1"
+                    >
+                      mdi-chart-bar
+                    </v-icon>
+                    <div class="text-h6 mt-4">
+                      暫無圖表資料
+                    </div>
+                    <div class="text-body-2 text-medium-emphasis">
+                      開市時間會自動記錄成交量變化
+                    </div>
+                  </div>
+                </template>
+
+                <canvas
+                  v-else
+                  ref="chartCanvas"
+                  class="chart-canvas"
+                />
+              </v-card-text>
+            </v-tabs-window-item>
+          </v-tabs-window>
         </v-card>
 
-        <!-- 圖表說明 -->
+        <!-- 下方圖表說明 -->
         <v-alert
           type="info"
           variant="tonal"
           class="mt-4"
         >
-          <template #title />
           圖表顯示當日 09:00-13:30 的{{ chartType === 'price' ? '價格走勢' : '成交量變化' }}，
           數據每10秒更新一次（僅在開市時間）。
         </v-alert>
@@ -163,7 +211,9 @@ const showDialog = defineModel<boolean>('showStockDetailDialog');
 const stock = defineModel<StockInfo | null>('stock', {default: null});
 
 // 取得損益顏色 - 使用 PnLUtil 統一邏輯
-const getPnLColor = TradingCostUtil.getPnLColor;
+const getPnLColor = (val: number) => {
+  return TradingCostUtil.getPnLColor(val).replace('text-', '');
+};
 
 // 註冊 Chart.js 組件
 Chart.register(

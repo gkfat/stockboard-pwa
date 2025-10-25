@@ -91,7 +91,7 @@
 
       <v-spacer class="mb-5" />
   
-      <div class="stock-grid">
+      <div class="stock-list">
         <WatchlistItem
           v-for="(stock, index) in stockList"
           :key="stock.code"
@@ -207,10 +207,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.stock-grid {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+.stock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .empty-state {
