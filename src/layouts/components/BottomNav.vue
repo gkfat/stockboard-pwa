@@ -33,11 +33,11 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { useWatchlist } from '@/composables/useWatchlist';
+import { useWatchlistState } from '@/composables/useWatchlistState';
 
 const router = useRouter();
 const route = useRoute();
-const { watchlist } = useWatchlist();
+const { watchlist } = useWatchlistState();
 
 // 當前活躍的標籤
 const activeTab = ref('watchlist');
