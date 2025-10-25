@@ -23,9 +23,28 @@ export default defineConfig(() => {
         autoImport: true
       }),
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt', // 改為 prompt 模式，讓使用者控制更新
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'android-chrome-*.png'],
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          // 快取策略
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/mis\.twse\.com\.tw\/stock\/api\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'twse-api-cache',
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 60 * 5, // 5 分鐘
+                },
+                networkTimeoutSeconds: 3,
+              },
+            },
+          ],
+        },
+        devOptions: {
+          enabled: true, // 開發模式也啟用 PWA
         },
         manifest: {
           name: 'StockBoard',
