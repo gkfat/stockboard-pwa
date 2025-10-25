@@ -24,6 +24,7 @@ export interface StockPosition {
   avgBuyPrice: number;        // 平均買入價
   totalBuyAmount: number;     // 總買入金額 (含手續費)
   totalSellAmount: number;    // 總賣出金額 (扣除手續費和稅)
+  totalSoldCost: number;      // 已賣出股票的原始成本 (用於計算已實現績效)
   realizedPnL: number;        // 已實現損益
   unrealizedPnL: number;      // 未實現損益
   currentPrice: number;       // 目前股價

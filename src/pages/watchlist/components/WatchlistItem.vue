@@ -45,7 +45,7 @@
         
         <v-chip
           v-if="!isLoading"
-          :color="StockUtil.getChangeColor(stock.change)"
+          :color="getPnLColor(stock.change)"
           variant="elevated"
         >
           <v-icon
@@ -81,14 +81,21 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { StockInfo } from '@/types/stock';
-import { StockUtil } from '@/utils/stock';
 import { FormatUtil } from '@/utils/formatUtil';
+import { PnLUtil } from '@/utils/pnlUtil';
 
 // Emits
 defineEmits<{
   click: []
   remove: []
 }>();
+
+// 取得損益顏色 - 使用 PnLUtil 統一邏輯
+const getPnLColor = (val: number) => {
+  const res = PnLUtil.getPnLColor(val);
+
+  return res.replace('text-', '');
+};
 
 const stock = defineModel<StockInfo>({required: true});
 

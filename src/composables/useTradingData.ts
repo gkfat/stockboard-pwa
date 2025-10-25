@@ -1,10 +1,9 @@
 import { ref, computed } from 'vue';
 import { db } from '@/db/stockDB';
 import { stockDataService } from '@/services/stockDataService';
-import { TradingCalculator } from '@/utils/tradingCalculator';
+import { PnLUtil } from '@/utils/pnlUtil';
 import type { TradeRecord, StockPosition, TotalPnL } from '@/types/trading';
 import type { ProcessedStockInfo } from '@/types/twse-api';
-import { TradeDirection } from '@/enums/trade-direction';
 
 // 全域單例狀態 - 所有元件共享同一個記憶體位置
 const trades = ref<TradeRecord[]>([]);
@@ -14,125 +13,18 @@ const error = ref<string | null>(null);
 
 /**
  * 計算股票持倉 (單例 computed)
+ * 使用 PnLUtil 統一計算邏輯
  */
 const positions = computed((): StockPosition[] => {
-  const positionMap = new Map<string, StockPosition>();
-
-  trades.value.forEach(trade => {
-    const ticker = trade.ticker;
-
-    if (!positionMap.has(ticker)) {
-      const stockInfo = stockPrices.value[ticker];
-      positionMap.set(ticker, {
-        ticker,
-        stockName: stockInfo?.name || ticker,
-        totalBuyQuantity: 0,
-        totalSellQuantity: 0,
-        avgBuyPrice: 0,
-        totalBuyAmount: 0,
-        totalSellAmount: 0,
-        realizedPnL: 0,
-        unrealizedPnL: 0,
-        totalFees: 0,
-        totalTax: 0,
-        holdingQuantity: 0,
-        marketValue: 0,
-        currentPrice: stockInfo?.currentPrice || 0
-      });
-    }
-
-    const position = positionMap.get(ticker)!;
-    
-    // 累計手續費和稅
-    position.totalFees += trade.fee;
-    position.totalTax += trade.tax;
-
-    if (trade.direction === TradeDirection.BUY) {
-      // 計算加權平均買入價格
-      const newAvgPrice = TradingCalculator.calculateAverageBuyPrice(
-        position.totalBuyQuantity,
-        position.avgBuyPrice,
-        trade.quantity,
-        trade.price
-      );
-      position.totalBuyQuantity += trade.quantity;
-      position.avgBuyPrice = newAvgPrice;
-      position.totalBuyAmount += (trade.price * trade.quantity) + trade.fee;
-    } else {
-      // 賣出
-      position.totalSellQuantity += trade.quantity;
-      position.totalSellAmount += (trade.price * trade.quantity) - trade.fee - trade.tax;
-
-      // 計算已實現損益
-      const realizedPnL = TradingCalculator.calculateRealizedPnL(
-        trade.price,
-        trade.quantity,
-        position.avgBuyPrice,
-        trade.fee,
-        trade.tax
-      );
-      position.realizedPnL += realizedPnL;
-    }
-  });
-
-  // 計算每個持倉的最終數據
-  const result: StockPosition[] = [];
-  positionMap.forEach(position => {
-    // 計算持有數量
-    position.holdingQuantity = position.totalBuyQuantity - position.totalSellQuantity;
-
-    // 計算未實現損益（只有持有數量 > 0 時才計算）
-    if (position.holdingQuantity > 0) {
-      const rawUnrealizedPnL = TradingCalculator.calculateUnrealizedPnL(
-        position.currentPrice,
-        position.holdingQuantity,
-        position.avgBuyPrice
-      );
-
-      // 計算賣出時的預估手續費和稅
-      const sellFeeEstimate = TradingCalculator.estimateFees(
-        position.currentPrice,
-        position.holdingQuantity,
-        TradeDirection.SELL
-      );
-
-      // 扣除預估賣出費用後的未實現損益
-      position.unrealizedPnL = rawUnrealizedPnL - sellFeeEstimate.fee - sellFeeEstimate.tax;
-      position.marketValue = position.currentPrice * position.holdingQuantity;
-    }
-
-    result.push(position);
-  });
-
-  return result;
+  return PnLUtil.calculatePositions(trades.value, stockPrices.value);
 });
 
 /**
  * 計算總損益 (單例 computed)
+ * 使用 PnLUtil 統一計算邏輯
  */
 const totalPnL = computed((): TotalPnL => {
-  const result: TotalPnL = {
-    totalRealizedPnL: 0,
-    totalUnrealizedPnL: 0,
-    totalInvestment: 0,
-    currentMarketValue: 0,
-    totalFees: 0,
-    totalTax: 0,
-    totalPnL: 0
-  };
-
-  positions.value.forEach(position => {
-    result.totalRealizedPnL += position.realizedPnL;
-    result.totalUnrealizedPnL += position.unrealizedPnL;
-    result.totalInvestment += position.totalBuyAmount;
-    result.currentMarketValue += position.marketValue;
-    result.totalFees += position.totalFees;
-    result.totalTax += position.totalTax;
-  });
-
-  result.totalPnL = result.totalRealizedPnL + result.totalUnrealizedPnL;
-
-  return result;
+  return PnLUtil.calculateTotalPnL(positions.value);
 });
 
 /**
@@ -177,10 +69,12 @@ export function useTradingData() {
       // 使用 stockDataService 載入股票資料
       const stockData = await stockDataService.getMultipleStocks(tickers);
       
-      // 將股票資料存入 stockPrices
-      stockData.forEach((stock: any) => {
-        stockPrices.value[stock.ticker] = stock;
+      // 將股票資料存入 stockPrices (注意：ProcessedStockInfo 使用 code 而非 ticker)
+      stockData.forEach((stock: ProcessedStockInfo) => {
+        stockPrices.value[stock.code] = stock;
       });
+      
+      console.log('[useTradingData] ✅ 載入股票價格:', stockData.map(s => `${s.code}: ${s.name}`));
     } catch (err) {
       console.error('[useTradingData] ❌ 載入股票價格失敗:', err);
       error.value = '載入股票價格失敗';

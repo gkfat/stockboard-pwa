@@ -1,13 +1,11 @@
 <template>
+  <!-- 總損益統計 -->
+  <PnLSummary
+    v-model:positions="positions"
+    v-model:total-pn-l="totalPnL"
+  />
+
   <v-container>
-    <!-- 總損益統計 -->
-    <PnLOverviewCard
-      v-model:positions="positions"
-      v-model:total-pn-l="totalPnL"
-    />
-
-    <v-spacer class="mb-5" />
-
     <v-row class="align-center justify-end">
       <v-col cols="auto">
         <v-btn
@@ -70,7 +68,7 @@ import { ref, onMounted } from 'vue';
 import AddTradeDialog from './components/AddTradeDialog.vue';
 import PositionItem from './components/PositionItem.vue';
 import { useTradingData } from '@/composables/useTradingData';
-import PnLOverviewCard from './components/PnLOverviewCard.vue';
+import PnLSummary from './components/PnLSummary.vue';
 
 const { positions, totalPnL, loadTradingData } = useTradingData();
 

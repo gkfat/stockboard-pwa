@@ -41,7 +41,7 @@
             <v-card variant="tonal">
               <v-card-text class="text-center">
                 <v-chip
-                  :color="StockUtil.getChangeColor(stock.change)"
+                  :color="getPnLColor(stock.change)"
                   variant="text"
                 >
                   <v-icon
@@ -156,11 +156,14 @@ import {
 } from 'chart.js';
 import { useStockPrice } from '@/composables/useStockPrice';
 import { useStock } from '@/composables/useStock';
-import { StockUtil } from '@/utils/stock';
 import { FormatUtil } from '@/utils/formatUtil';
+import { PnLUtil } from '@/utils/pnlUtil';
 
 const showDialog = defineModel<boolean>('showStockDetailDialog');
 const stock = defineModel<StockInfo | null>('stock', {default: null});
+
+// 取得損益顏色 - 使用 PnLUtil 統一邏輯
+const getPnLColor = PnLUtil.getPnLColor;
 
 // 註冊 Chart.js 組件
 Chart.register(

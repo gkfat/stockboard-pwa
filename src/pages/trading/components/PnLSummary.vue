@@ -1,9 +1,9 @@
 <template>
   <v-card
-    class="mb-4"
+    rounded="0"
+    elevation="0"
     color="surface-variant"
   >
-    <v-card-title>總損益統計</v-card-title>
     <v-card-text>
       <v-row>
         <v-col
@@ -116,6 +116,7 @@
 <script setup lang="ts">
 import { StockPosition, TotalPnL } from '@/types/trading';
 import { FormatUtil } from '@/utils/formatUtil';
+import { PnLUtil } from '@/utils/pnlUtil';
 
 const totalPnL = defineModel<TotalPnL>('totalPnL', { required: true });
 const positions = defineModel<StockPosition[]>('positions', { required: true });
@@ -123,46 +124,27 @@ const positions = defineModel<StockPosition[]>('positions', { required: true });
 // 使用統一的格式化工具
 const { formatCurrency, formatPercentage } = FormatUtil;
 
-// 取得損益顏色
-const getPnLColor = (amount: number): string => {
-  if (amount > 0) return 'text-error'; // 獲利紅色
-  if (amount < 0) return 'text-success'; // 虧損綠色
-  return 'text-grey';
-};
+// 取得損益顏色 - 使用 PnLUtil 統一邏輯
+const getPnLColor = PnLUtil.getPnLColor;
 
-// 計算總績效百分比
+// 計算總績效百分比 - 使用 PnLUtil
 const calculateTotalPerformance = (): number => {
-  if (totalPnL.value.totalInvestment === 0) return 0;
-  
-  // 總績效 % = 總損益 / 總投資成本 * 100
-  return (totalPnL.value.totalPnL / totalPnL.value.totalInvestment) * 100;
+  return PnLUtil.calculateTotalPerformancePercentage(
+    totalPnL.value.totalPnL,
+    totalPnL.value.totalInvestment
+  );
 };
 
-// 計算總已實現績效百分比
+// 計算總已實現績效百分比 - 使用 PnLUtil
 const calculateTotalRealizedPerformance = (): number => {
-  // 計算所有已賣出金額總和
-  const totalSellAmount = positions.value.reduce((sum, position) => sum + position.totalSellAmount, 0);
-  if (totalSellAmount === 0) return 0;
-  
-  // 總已實現績效 % = 總已實現損益 / 總賣出金額 * 100
-  return (totalPnL.value.totalRealizedPnL / totalSellAmount) * 100;
+  return PnLUtil.calculateTotalRealizedPerformancePercentage(
+    totalPnL.value.totalRealizedPnL,
+    positions.value
+  );
 };
 
-// 計算總未實現績效百分比
+// 計算總未實現績效百分比 - 使用 PnLUtil
 const calculateTotalUnrealizedPerformance = (): number => {
-  let totalCostOfHoldings = 0;
-  let totalCurrentValue = 0;
-  
-  positions.value.forEach(position => {
-    if (position.holdingQuantity > 0) {
-      totalCostOfHoldings += position.avgBuyPrice * position.holdingQuantity;
-      totalCurrentValue += position.marketValue;
-    }
-  });
-  
-  if (totalCostOfHoldings === 0) return 0;
-  
-  // 總未實現績效 % = (總現值 - 總成本) / 總成本 * 100
-  return ((totalCurrentValue - totalCostOfHoldings) / totalCostOfHoldings) * 100;
+  return PnLUtil.calculateTotalUnrealizedPerformancePercentage(positions.value);
 };
 </script>

@@ -89,6 +89,7 @@
 import { useStockStore } from '@/composables/useStockStore';
 import type { StockPosition } from '@/types/trading';
 import { FormatUtil } from '@/utils/formatUtil';
+import { PnLUtil } from '@/utils/pnlUtil';
 
 // Emits
 defineEmits<{
@@ -119,40 +120,30 @@ const getStockPriceColor = (ticker: string): string => {
   return 'text-grey';
 };
 
-// 取得損益顏色
-const getPnLColor = (amount: number): string => {
-  if (amount > 0) return 'text-error'; // 獲利紅色
-  if (amount < 0) return 'text-success'; // 虧損綠色
-  return 'text-grey';
-};
+// 取得損益顏色 - 使用 PnLUtil 統一邏輯
+const getPnLColor = PnLUtil.getPnLColor;
 
-// 計算已實現績效百分比
+// 計算已實現績效百分比 - 使用 PnLUtil
 const calculateRealizedPerformance = (position: StockPosition): number => {
-  if (position.totalSellAmount === 0) return 0;
-  
-  // 已實現績效 % = 已實現損益 / 已賣出金額 * 100
-  return (position.realizedPnL / position.totalSellAmount) * 100;
+  return PnLUtil.calculateRealizedPerformancePercentage(
+    position.realizedPnL, 
+    position.totalSoldCost
+  );
 };
 
-// 計算未實現績效百分比
+// 計算未實現績效百分比 - 使用 PnLUtil
 const calculateUnrealizedPerformance = (position: StockPosition): number => {
-  if (position.holdingQuantity === 0 || position.avgBuyPrice === 0) return 0;
-  
   const currentPrice = getCurrentPrice(position.ticker);
-  if (currentPrice === 0) return 0;
-  
-  // 未實現績效 % = (現價 - 均價) / 均價 * 100
-  return ((currentPrice - position.avgBuyPrice) / position.avgBuyPrice) * 100;
+  return PnLUtil.calculateUnrealizedPerformancePercentage(
+    currentPrice,
+    position.holdingQuantity,
+    position.avgBuyPrice
+  );
 };
 
-// 計算總績效百分比
+// 計算總績效百分比 - 使用 PnLUtil
 const calculateTotalPerformance = (position: StockPosition): number => {
-  if (position.totalBuyAmount === 0) return 0;
-  
-  // 總損益 = 已實現損益 + 未實現損益
   const totalPnL = position.realizedPnL + position.unrealizedPnL;
-  
-  // 總績效 % = 總損益 / 總投資成本 * 100
-  return (totalPnL / position.totalBuyAmount) * 100;
+  return PnLUtil.calculatePerformancePercentage(totalPnL, position.totalBuyAmount);
 };
 </script>

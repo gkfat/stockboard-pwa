@@ -61,7 +61,7 @@
                     {{ formatPrice(searchResult.price) }}
                   </div>
                   <v-chip
-                    :color="StockUtil.getChangeColor(searchResult.change)"
+                    :color="getPnLColor(searchResult.change)"
                     size="small"
                   >
                     {{ formatChange(searchResult.change) }}
@@ -102,13 +102,16 @@ import { useWatchlistState } from '@/composables/useWatchlistState';
 import { FormatUtil } from '@/utils/formatUtil';
 import { useWatchlistActions } from '@/composables/useWatchlistActions';
 import type { StockInfo } from '@/types/stock';
-import { StockUtil } from '@/utils/stock';
+import { PnLUtil } from '@/utils/pnlUtil';
 
 const emit = defineEmits<{
   'added': []
 }>();
 
 const showDialog = defineModel<boolean>();
+
+// 取得損益顏色 - 使用 PnLUtil 統一邏輯
+const getPnLColor = PnLUtil.getPnLColor;
 
 // Composables
 const { fetchMultipleStocks } = useStock();
