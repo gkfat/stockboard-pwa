@@ -1,9 +1,4 @@
-/**
- * 交易紀錄相關型別定義
- */
-
-// 交易方向
-export type TradeDirection = 'BUY' | 'SELL';
+import { TradeDirection } from '@/enums/trade-direction';
 
 // 交易紀錄
 export interface TradeRecord {

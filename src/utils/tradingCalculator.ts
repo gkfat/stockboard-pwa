@@ -1,4 +1,5 @@
-import type { TradingFeeParams, TradingFeeResult, TradeDirection } from '@/types/trading';
+import { TradeDirection } from '@/enums/trade-direction';
+import { TradingFeeParams, TradingFeeResult } from '@/types/trading';
 
 /**
  * 台灣股票交易費用計算器
@@ -23,10 +24,10 @@ export class TradingCalculator {
     const fee = Math.max(Math.floor(rawFee), this.MIN_FEE);
 
     // 計算交易稅 (只有賣出才有)
-    const tax = direction === 'SELL' ? Math.floor(amount * this.TAX_RATE) : 0;
+    const tax = direction === TradeDirection.SELL ? Math.floor(amount * this.TAX_RATE) : 0;
 
     // 總成本
-    const totalCost = direction === 'BUY' 
+    const totalCost = direction === TradeDirection.BUY
       ? amount + fee           // 買入：金額 + 手續費
       : amount - fee - tax;    // 賣出：金額 - 手續費 - 交易稅
 

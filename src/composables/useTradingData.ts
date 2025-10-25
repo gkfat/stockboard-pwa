@@ -4,6 +4,7 @@ import { stockDataService } from '@/services/stockDataService';
 import { TradingCalculator } from '@/utils/tradingCalculator';
 import type { TradeRecord, StockPosition, TotalPnL } from '@/types/trading';
 import type { ProcessedStockInfo } from '@/types/twse-api';
+import { TradeDirection } from '@/enums/trade-direction';
 
 /**
  * 交易資料 Composable
@@ -89,7 +90,7 @@ export function useTradingData() {
       position.totalFees += trade.fee;
       position.totalTax += trade.tax;
 
-      if (trade.direction === 'BUY') {
+      if (trade.direction === TradeDirection.BUY) {
         // 買入邏輯
         const newAvgPrice = TradingCalculator.calculateAverageBuyPrice(
           position.totalBuyQuantity,
@@ -102,7 +103,7 @@ export function useTradingData() {
         position.avgBuyPrice = newAvgPrice;
         position.totalBuyAmount += (trade.price * trade.quantity) + trade.fee;
         
-      } else if (trade.direction === 'SELL') {
+      } else if (trade.direction === TradeDirection.SELL) {
         // 賣出邏輯
         position.totalSellQuantity += trade.quantity;
         position.totalSellAmount += (trade.price * trade.quantity) - trade.fee - trade.tax;
@@ -137,7 +138,7 @@ export function useTradingData() {
         const sellFeeEstimate = TradingCalculator.estimateFees(
           position.currentPrice,
           position.holdingQuantity,
-          'SELL'
+          TradeDirection.SELL
         );
         
         // 未實現損益需扣除賣出時的手續費和交易稅
