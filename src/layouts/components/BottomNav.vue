@@ -4,6 +4,7 @@
     fixed
     app
     :elevation="8"
+    height="80"
   >
     <v-btn
       value="watchlist"
