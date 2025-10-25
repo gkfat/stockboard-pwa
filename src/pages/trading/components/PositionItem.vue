@@ -5,7 +5,7 @@
     @click="$emit('click', position)"
   >
     <v-card-text>
-      <div class="d-flex justify-space-between align-center mb-2">
+      <div class="d-flex justify-space-between mb-2">
         <div>
           <h3>{{ position.stockName }}</h3>
           <span class="text-caption text-grey">{{ position.ticker }}</span>

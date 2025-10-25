@@ -1,6 +1,6 @@
 <template>
   <v-card
-    class="stock-list-card mb-2"
+    class="mb-2"
     hover
     @click="$emit('click')"
   >
@@ -13,9 +13,9 @@
         <v-col
           cols="12"
           sm="3"
-          class="d-flex flex-column"
+          :class="['d-flex', xs ? 'align-center ga-3' : 'flex-column']"
         >
-          <span class="text-subtitle-1 font-weight-medium text-truncate">
+          <span class="text-subtitle-1 font-weight-medium">
             {{ stock.name }}
           </span>
           <span class="text-caption text-medium-emphasis">
@@ -25,7 +25,7 @@
 
         <!-- 股價 -->
         <v-col
-          cols="3"
+          cols="4"
           sm="2"
           :class="xs ? 'text-left' : 'text-right'"
         >
@@ -36,7 +36,7 @@
             />
           </template>
           <template v-else>
-            <span class="text-h6 font-weight-bold">
+            <span :class="['text-h6 font-weight-bold', getPnLColorClass(stock.change)]">
               {{ formatPrice(stock.price) }}
             </span>
           </template>
@@ -97,7 +97,7 @@
 
         <!-- 刪除 -->
         <v-col
-          cols="3"
+          cols="2"
           sm="2"
           class="d-flex justify-end"
         >
@@ -163,43 +163,4 @@ const formatVolume = (volume: number): string => {
 </script>
 
 <style scoped>
-.stock-grid {
-  display: grid;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-
-  grid-template-columns:
-    minmax(110px, 1fr) /* 名稱代號 */
-    80px               /* 價格 */
-    90px               /* 漲跌 */
-    90px               /* 成交量 */
-    auto;              /* 刪除按鈕 */
-}
-
-/* 小螢幕排版重組：名稱獨占一行 */
-@media (max-width: 480px) {
-  .stock-grid {
-    grid-template-columns:
-      1fr   /* 名稱佔滿 */
-      70px  /* 價格 */
-      70px  /* 漲跌 */
-      auto  /* 成交量 */
-      auto; /* 刪除 */;
-  }
-
-  .name-col {
-    grid-column: span 5;
-    margin-bottom: 6px;
-  }
-}
-
-/* 確保文字不會擠爆 */
-.name-col .name,
-.name-col .code {
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 </style>
