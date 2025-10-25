@@ -157,13 +157,13 @@ import {
 import { useStockPrice } from '@/composables/useStockPrice';
 import { useStock } from '@/composables/useStock';
 import { FormatUtil } from '@/utils/formatUtil';
-import { PnLUtil } from '@/utils/pnlUtil';
+import { TradingCostUtil } from '@/utils/tradingCostUtil';
 
 const showDialog = defineModel<boolean>('showStockDetailDialog');
 const stock = defineModel<StockInfo | null>('stock', {default: null});
 
 // 取得損益顏色 - 使用 PnLUtil 統一邏輯
-const getPnLColor = PnLUtil.getPnLColor;
+const getPnLColor = TradingCostUtil.getPnLColor;
 
 // 註冊 Chart.js 組件
 Chart.register(

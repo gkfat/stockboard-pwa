@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue';
 import { db } from '@/db/stockDB';
 import { stockDataService } from '@/services/stockDataService';
-import { PnLUtil } from '@/utils/pnlUtil';
+import { PortfolioService } from '@/services/portfolioService';
 import type { TradeRecord, StockPosition, TotalPnL } from '@/types/trading';
 import type { ProcessedStockInfo } from '@/types/twse-api';
 
@@ -13,18 +13,18 @@ const error = ref<string | null>(null);
 
 /**
  * 計算股票持倉 (單例 computed)
- * 使用 PnLUtil 統一計算邏輯
+ * 使用 PortfolioService
  */
 const positions = computed((): StockPosition[] => {
-  return PnLUtil.calculatePositions(trades.value, stockPrices.value);
+  return PortfolioService.calculatePositions(trades.value, stockPrices.value);
 });
 
 /**
  * 計算總損益 (單例 computed)
- * 使用 PnLUtil 統一計算邏輯
+ * 使用 PortfolioService
  */
 const totalPnL = computed((): TotalPnL => {
-  return PnLUtil.calculateTotalPnL(positions.value);
+  return PortfolioService.calculateTotalPnL(positions.value);
 });
 
 /**

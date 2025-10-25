@@ -82,7 +82,7 @@
 import { computed } from 'vue';
 import type { StockInfo } from '@/types/stock';
 import { FormatUtil } from '@/utils/formatUtil';
-import { PnLUtil } from '@/utils/pnlUtil';
+import { TradingCostUtil } from '@/utils/tradingCostUtil';
 
 // Emits
 defineEmits<{
@@ -92,7 +92,7 @@ defineEmits<{
 
 // 取得損益顏色 - 使用 PnLUtil 統一邏輯
 const getPnLColor = (val: number) => {
-  const res = PnLUtil.getPnLColor(val);
+  const res = TradingCostUtil.getPnLColor(val);
 
   return res.replace('text-', '');
 };

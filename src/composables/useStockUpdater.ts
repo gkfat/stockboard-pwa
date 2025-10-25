@@ -4,6 +4,7 @@ import { useStockStore } from './useStockStore';
 import { useWatchlistState } from './useWatchlistState';
 import { useMarketTime } from './useMarketTime';
 import { useStockPrice } from './useStockPrice';
+import { CACHE_CONFIG } from '@/constants';
 
 /**
  * 股票資料自動更新邏輯
@@ -19,7 +20,7 @@ export function useStockUpdater() {
   // 全域單例狀態，防止重複註冊 interval
   let globalUpdateInterval: ReturnType<typeof setInterval> | null = null;
   const globalIsAutoUpdateEnabled = ref(false);
-  const UPDATE_INTERVAL = 30 * 1000; // 30 秒
+  const UPDATE_INTERVAL = CACHE_CONFIG.STOCK_DATA_DURATION; // 使用統一常數
 
   // 更新所有自選股報價
   const updateAllStocks = async () => {

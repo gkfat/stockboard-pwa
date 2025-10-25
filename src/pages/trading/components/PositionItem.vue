@@ -89,7 +89,7 @@
 import { useStockStore } from '@/composables/useStockStore';
 import type { StockPosition } from '@/types/trading';
 import { FormatUtil } from '@/utils/formatUtil';
-import { PnLUtil } from '@/utils/pnlUtil';
+import { PortfolioService } from '@/services/portfolioService';
 
 // Emits
 defineEmits<{
@@ -120,30 +120,32 @@ const getStockPriceColor = (ticker: string): string => {
   return 'text-grey';
 };
 
-// 取得損益顏色 - 使用 PnLUtil 統一邏輯
-const getPnLColor = PnLUtil.getPnLColor;
+// 取得損益顏色 - 使用 PortfolioService
+const getPnLColor = PortfolioService.getPnLColor;
 
-// 計算已實現績效百分比 - 使用 PnLUtil
+// 計算已實現績效百分比 - 使用 PortfolioService
 const calculateRealizedPerformance = (position: StockPosition): number => {
-  return PnLUtil.calculateRealizedPerformancePercentage(
+  return PortfolioService.calculateRealizedPerformancePercentage(
     position.realizedPnL, 
     position.totalSoldCost
   );
 };
 
-// 計算未實現績效百分比 - 使用 PnLUtil
+// 計算未實現績效百分比 - 使用 PortfolioService
 const calculateUnrealizedPerformance = (position: StockPosition): number => {
+  if (position.holdingQuantity <= 0 || position.avgBuyPrice <= 0) return 0;
+  
   const currentPrice = getCurrentPrice(position.ticker);
-  return PnLUtil.calculateUnrealizedPerformancePercentage(
-    currentPrice,
-    position.holdingQuantity,
-    position.avgBuyPrice
-  );
+  const costValue = position.avgBuyPrice * position.holdingQuantity;
+  const marketValue = currentPrice * position.holdingQuantity;
+  const unrealizedPnL = marketValue - costValue;
+  
+  return PortfolioService.calculatePerformancePercentage(unrealizedPnL, costValue);
 };
 
-// 計算總績效百分比 - 使用 PnLUtil
+// 計算總績效百分比 - 使用 PortfolioService
 const calculateTotalPerformance = (position: StockPosition): number => {
   const totalPnL = position.realizedPnL + position.unrealizedPnL;
-  return PnLUtil.calculatePerformancePercentage(totalPnL, position.totalBuyAmount);
+  return PortfolioService.calculatePerformancePercentage(totalPnL, position.totalBuyAmount);
 };
 </script>

@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue';
+import { TAIWAN_MARKET_TIME } from '@/constants';
 
 export function useMarketTime() {
   const currentTime = ref(new Date());
@@ -17,8 +18,8 @@ export function useMarketTime() {
     const timeInMinutes = hour * 60 + minute;
 
     // 週一到週五 09:00–13:30
-    const isWeekday = day >= 1 && day <= 5;
-    const isInTradingHours = timeInMinutes >= 540 && timeInMinutes <= 810; // 09:00-13:30
+    const isWeekday = day >= TAIWAN_MARKET_TIME.MONDAY && day <= TAIWAN_MARKET_TIME.FRIDAY;
+    const isInTradingHours = timeInMinutes >= TAIWAN_MARKET_TIME.TRADING_START && timeInMinutes <= TAIWAN_MARKET_TIME.TRADING_END;
 
     return isWeekday && isInTradingHours;
   });
@@ -33,12 +34,12 @@ export function useMarketTime() {
     const now = currentTime.value;
     const nextOpen = new Date(now);
     
-    if (now.getDay() === 0) { // 週日
+    if (now.getDay() === TAIWAN_MARKET_TIME.SUNDAY) { // 週日
       nextOpen.setDate(now.getDate() + 1);
-    } else if (now.getDay() === 6) { // 週六
+    } else if (now.getDay() === TAIWAN_MARKET_TIME.SATURDAY) { // 週六
       nextOpen.setDate(now.getDate() + 2);
     } else if (!isMarketOpen.value) { // 平日但非開市時間
-      if (now.getHours() >= 14) { // 下午2點後，下個交易日
+      if (now.getHours() >= TAIWAN_MARKET_TIME.AFTERNOON_CUTOFF) { // 下午2點後，下個交易日
         nextOpen.setDate(now.getDate() + 1);
       }
     }

@@ -116,7 +116,7 @@
 <script setup lang="ts">
 import { StockPosition, TotalPnL } from '@/types/trading';
 import { FormatUtil } from '@/utils/formatUtil';
-import { PnLUtil } from '@/utils/pnlUtil';
+import { PortfolioService } from '@/services/portfolioService';
 
 const totalPnL = defineModel<TotalPnL>('totalPnL', { required: true });
 const positions = defineModel<StockPosition[]>('positions', { required: true });
@@ -124,27 +124,40 @@ const positions = defineModel<StockPosition[]>('positions', { required: true });
 // 使用統一的格式化工具
 const { formatCurrency, formatPercentage } = FormatUtil;
 
-// 取得損益顏色 - 使用 PnLUtil 統一邏輯
-const getPnLColor = PnLUtil.getPnLColor;
+// 取得損益顏色 - 使用 PortfolioService
+const getPnLColor = PortfolioService.getPnLColor;
 
-// 計算總績效百分比 - 使用 PnLUtil
+// 計算總績效百分比 - 使用 PortfolioService
 const calculateTotalPerformance = (): number => {
-  return PnLUtil.calculateTotalPerformancePercentage(
+  return PortfolioService.calculatePerformancePercentage(
     totalPnL.value.totalPnL,
     totalPnL.value.totalInvestment
   );
 };
 
-// 計算總已實現績效百分比 - 使用 PnLUtil
+// 計算總已實現績效百分比 - 使用 PortfolioService
 const calculateTotalRealizedPerformance = (): number => {
-  return PnLUtil.calculateTotalRealizedPerformancePercentage(
+  const totalSoldCost = positions.value.reduce((sum, position) => sum + position.totalSoldCost, 0);
+  return PortfolioService.calculateRealizedPerformancePercentage(
     totalPnL.value.totalRealizedPnL,
-    positions.value
+    totalSoldCost
   );
 };
 
-// 計算總未實現績效百分比 - 使用 PnLUtil
+// 計算總未實現績效百分比 - 使用 PortfolioService
 const calculateTotalUnrealizedPerformance = (): number => {
-  return PnLUtil.calculateTotalUnrealizedPerformancePercentage(positions.value);
+  let totalCostOfHoldings = 0;
+  let totalCurrentValue = 0;
+  
+  positions.value.forEach(position => {
+    if (position.holdingQuantity > 0) {
+      totalCostOfHoldings += position.avgBuyPrice * position.holdingQuantity;
+      totalCurrentValue += position.marketValue;
+    }
+  });
+  
+  if (totalCostOfHoldings === 0) return 0;
+  const unrealizedPnL = totalCurrentValue - totalCostOfHoldings;
+  return PortfolioService.calculatePerformancePercentage(unrealizedPnL, totalCostOfHoldings);
 };
 </script>

@@ -102,7 +102,7 @@ import { useWatchlistState } from '@/composables/useWatchlistState';
 import { FormatUtil } from '@/utils/formatUtil';
 import { useWatchlistActions } from '@/composables/useWatchlistActions';
 import type { StockInfo } from '@/types/stock';
-import { PnLUtil } from '@/utils/pnlUtil';
+import { TradingCostUtil } from '@/utils/tradingCostUtil';
 
 const emit = defineEmits<{
   'added': []
@@ -111,7 +111,7 @@ const emit = defineEmits<{
 const showDialog = defineModel<boolean>();
 
 // 取得損益顏色 - 使用 PnLUtil 統一邏輯
-const getPnLColor = PnLUtil.getPnLColor;
+const getPnLColor = TradingCostUtil.getPnLColor;
 
 // Composables
 const { fetchMultipleStocks } = useStock();

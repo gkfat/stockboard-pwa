@@ -267,7 +267,7 @@ import { ref, computed, watch, useTemplateRef } from 'vue';
 import { useTradingData } from '@/composables/useTradingData';
 import { useStockDetail } from '@/composables/useStockDetail';
 import { useTradeRules } from '../composables/useTradeRules';
-import { TradingCalculator } from '@/utils/tradingCalculator';
+import { TradingService } from '@/services/tradingService';
 import { DateUtils } from '@/utils/dateUtils';
 import { FormatUtil } from '@/utils/formatUtil';
 import { TradingFeeResult } from '@/types/trading';
@@ -312,14 +312,14 @@ const estimate = computed<TradingFeeResult | null>(() => {
     return null;
   }
   
-  return TradingCalculator.estimateFees(price, quantity, formData.value.direction);
+  return TradingService.estimateFees(price, quantity, formData.value.direction);
 });
 
 const summary = computed(() => {
   const price = parseFloat(formData.value.price);
   const quantity = formData.value.quantity;
   
-  return TradingCalculator.calculateTradingSummary(
+  return TradingService.calculateTradingSummary(
     price,
     quantity,
     formData.value.direction,

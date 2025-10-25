@@ -1,5 +1,6 @@
 import { twseApiService } from './TWSEApiService';
 import { useStockStore } from '@/composables/useStockStore';
+import { CACHE_CONFIG } from '@/constants';
 import type { ProcessedStockInfo } from '@/types/twse-api';
 import type { StockInfo } from '@/types/stock';
 
@@ -13,8 +14,8 @@ class StockDataService {
   private batchRequests = new Map<string, { codes: string[]; promise: Promise<ProcessedStockInfo[]> }>();
   private lastUpdateTime = new Map<string, number>();
   
-  // 快取有效期：30 秒
-  private readonly CACHE_DURATION = 30 * 1000;
+  // 快取有效期：使用統一常數
+  private readonly CACHE_DURATION = CACHE_CONFIG.STOCK_DATA_DURATION;
   
   /**
    * 轉換 ProcessedStockInfo 為 StockInfo
