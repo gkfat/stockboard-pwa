@@ -22,7 +22,7 @@
             v-model="stockCode"
             label="股票代號"
             placeholder="例：2330"
-            :rules="stockCodeRules"
+            :rules="tickerRules"
             :loading="loading"
             :error-messages="errorMessage"
             variant="outlined"
@@ -98,11 +98,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useStock } from '@/composables/useStock';
-import { useWatchlistState } from '@/composables/useWatchlistState';
 import { FormatUtil } from '@/utils/formatUtil';
 import { useWatchlistActions } from '@/composables/useWatchlistActions';
 import type { StockInfo } from '@/types/stock';
 import { TradingCostUtil } from '@/utils/tradingCostUtil';
+import { useWatchlistRules } from '../composables/useWatchlistRules';
 
 const emit = defineEmits<{
   'added': []
@@ -115,7 +115,6 @@ const getPnLColor = TradingCostUtil.getPnLColor;
 
 // Composables
 const { fetchMultipleStocks } = useStock();
-const { isInWatchlist } = useWatchlistState();
 const { addStock: addStockToWatchlist } = useWatchlistActions();
 
 // 響應式狀態
@@ -127,11 +126,8 @@ const adding = ref(false);
 const errorMessage = ref('');
 const searchResult = ref<StockInfo | null>(null);
 
-// 驗證規則
-const stockCodeRules = [
-  (v: string) => !!v || '請輸入股票代號',
-  (v: string) => !isInWatchlist(v) || '此股票已在自選股清單中'
-];
+const { tickerRules } = useWatchlistRules();
+
 
 // 方法
 const searchStock = async () => {
