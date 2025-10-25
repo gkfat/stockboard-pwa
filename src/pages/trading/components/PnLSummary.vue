@@ -9,6 +9,7 @@
         <v-col
           cols="6"
           md="2"
+          class="pa-1"
         >
           <div class="text-caption text-grey">
             已實現損益
@@ -29,6 +30,7 @@
         <v-col
           cols="6"
           md="2"
+          class="pa-1"
         >
           <div class="text-caption text-grey">
             未實現損益
@@ -49,6 +51,7 @@
         <v-col
           cols="6"
           md="2"
+          class="pa-1"
         >
           <div class="text-caption text-grey">
             總損益
@@ -69,6 +72,7 @@
         <v-col
           cols="6"
           md="2"
+          class="pa-1"
         >
           <div class="text-caption text-grey">
             總市值
@@ -83,6 +87,7 @@
         <v-col
           cols="6"
           md="2"
+          class="pa-1"
         >
           <div class="text-caption text-grey">
             總投資金額
@@ -97,6 +102,7 @@
         <v-col
           cols="6"
           md="2"
+          class="pa-1"
         >
           <div class="text-caption text-grey">
             費用總計
