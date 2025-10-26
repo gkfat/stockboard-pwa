@@ -26,6 +26,7 @@
         v-for="(position, index) in positions"
         :key="position.ticker"
         v-model="positions[index]"
+        @trade-deleted="handleTradeDeleted"
       />
     </div>
 
@@ -77,6 +78,11 @@ const showAddDialog = ref(false);
 // 處理交易新增完成
 const handleTradeAdded = async (): Promise<void> => {
   showAddDialog.value = false;
+  await loadTradingData(); // 重新載入數據
+};
+
+// 處理交易刪除完成
+const handleTradeDeleted = async (ticker: string): Promise<void> => {
   await loadTradingData(); // 重新載入數據
 };
 

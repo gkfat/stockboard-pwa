@@ -98,6 +98,35 @@ export class StockDB extends Dexie {
       throw error;
     }
   }
+
+  async getTradesByTicker(ticker: string): Promise<TradeRecord[]> {
+    try {
+      logger.log('Getting trades by ticker', ticker);
+      const trades = await this.trades
+        .where('ticker')
+        .equals(ticker)
+        .toArray();
+      
+      // 手動排序：按交易時間降序
+      return trades.sort((a, b) => 
+        new Date(b.traded_at).getTime() - new Date(a.traded_at).getTime()
+      );
+    } catch (error) {
+      logger.error('getTradesByTicker', error);
+      throw error;
+    }
+  }
+
+  async deleteTrade(id: string): Promise<void> {
+    try {
+      logger.log('Deleting trade', id);
+      await this.trades.delete(id);
+      logger.log('Trade deleted successfully', id);
+    } catch (error) {
+      logger.error('deleteTrade', error);
+      throw error;
+    }
+  }
 }
 
 // DB 實例
