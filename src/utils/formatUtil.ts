@@ -9,9 +9,8 @@
  * @param withCurrency 是否顯示貨幣符號，預設為 true
  * @returns 格式化的價格字串
  */
-export const formatPrice = (price: number, withCurrency = true): string => {
-  const formattedPrice = price.toFixed(2);
-  return withCurrency ? `$${formattedPrice}` : formattedPrice;
+export const formatPrice = (price: number): string => {
+  return price.toFixed(2);
 };
 
 /**
@@ -88,25 +87,6 @@ export const formatQuantity = (quantity: number): string => {
 };
 
 /**
- * 根據數值大小自動選擇合適的格式
- * @param value 數值
- * @returns 格式化後的字串
- */
-export const formatLargeNumber = (value: number): string => {
-  const absValue = Math.abs(value);
-  
-  if (absValue >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toFixed(1)}B`;
-  } else if (absValue >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(1)}M`;
-  } else if (absValue >= 1_000) {
-    return `${(value / 1_000).toFixed(1)}K`;
-  } else {
-    return value.toString();
-  }
-};
-
-/**
  * 格式化工具集合
  * 提供統一的匯出介面
  */
@@ -117,8 +97,7 @@ export const FormatUtil = {
   formatPercentage,
   formatChange,
   formatNumber,
-  formatQuantity,
-  formatLargeNumber
+  formatQuantity
 } as const;
 
 // 預設匯出
