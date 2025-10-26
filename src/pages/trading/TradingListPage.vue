@@ -27,6 +27,7 @@
         :key="position.ticker"
         v-model="positions[index]"
         @trade-deleted="handleTradeDeleted"
+        ref="positionItemRefs"
       />
     </div>
 
@@ -75,10 +76,27 @@ const { positions, totalPnL, loadTradingData } = useTradingData();
 
 const showAddDialog = ref(false);
 
+// PositionItem 組件的 ref
+const positionItemRefs = ref<InstanceType<typeof PositionItem>[]>([]);
+
 // 處理交易新增完成
 const handleTradeAdded = async (): Promise<void> => {
   showAddDialog.value = false;
   await loadTradingData(); // 重新載入數據
+  
+  // 更新所有展開的交易明細
+  await updateAllTradeRecords();
+};
+
+// 更新所有 PositionItem 的交易明細
+const updateAllTradeRecords = async (): Promise<void> => {
+  if (positionItemRefs.value) {
+    const updatePromises = positionItemRefs.value.map(ref => 
+      ref?.reloadTradeRecords?.()
+    ).filter(Boolean);
+    
+    await Promise.all(updatePromises);
+  }
 };
 
 // 處理交易刪除完成

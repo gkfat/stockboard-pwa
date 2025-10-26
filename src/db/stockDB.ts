@@ -107,9 +107,9 @@ export class StockDB extends Dexie {
         .equals(ticker)
         .toArray();
       
-      // 手動排序：按交易時間降序
+      // 手動排序：按交易時間升序
       return trades.sort((a, b) => 
-        new Date(b.traded_at).getTime() - new Date(a.traded_at).getTime()
+        new Date(a.traded_at).getTime() - new Date(b.traded_at).getTime()
       );
     } catch (error) {
       logger.error('getTradesByTicker', error);

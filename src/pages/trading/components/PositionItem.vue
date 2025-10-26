@@ -28,7 +28,7 @@
             </div>
             <div
               class="text-body-2"
-              :class="getStockPriceColor(position.ticker)"
+              :class="getCurrentPriceColor(position)"
             >
               現價: {{ formatPrice(getCurrentPrice(position.ticker)) }}
             </div>
@@ -36,7 +36,35 @@
         </div>
   
         <v-row>
-          <v-col cols="3">
+          <v-col
+            cols="6"
+            sm="6"
+            md="2"
+          >
+            <div class="text-caption text-grey">
+              總成本
+            </div>
+            <div class="text-body-2">
+              {{ formatCurrency(position.totalBuyAmount) }}
+            </div>
+          </v-col>
+          <v-col
+            cols="12"
+            sm="6"
+            md="2"
+          >
+            <div class="text-caption text-grey">
+              市值
+            </div>
+            <div class="text-body-2">
+              {{ formatCurrency(position.marketValue) }}
+            </div>
+          </v-col>
+          <v-col
+            cols="6"
+            sm="4"
+            md="2"
+          >
             <div class="text-caption text-grey">
               已實現損益
             </div>
@@ -50,7 +78,11 @@
               {{ formatPercentage(calculateRealizedPerformance(position)) }}
             </div>
           </v-col>
-          <v-col cols="3">
+          <v-col
+            cols="6"
+            sm="4"
+            md="2"
+          >
             <div class="text-caption text-grey">
               未實現損益
             </div>
@@ -64,7 +96,11 @@
               {{ formatPercentage(calculateUnrealizedPerformance(position)) }}
             </div>
           </v-col>
-          <v-col cols="3">
+          <v-col
+            cols="6"
+            sm="4"
+            md="2"
+          >
             <div class="text-caption text-grey">
               總損益
             </div>
@@ -76,17 +112,6 @@
               class="text-caption"
             >
               {{ formatPercentage(calculateTotalPerformance(position)) }}
-            </div>
-          </v-col>
-          <v-col cols="3">
-            <div class="text-caption text-grey">
-              市值
-            </div>
-            <div class="text-body-2">
-              {{ formatCurrency(position.marketValue) }}
-            </div>
-            <div class="text-caption text-grey">
-              {{ position.holdingQuantity }} 股
             </div>
           </v-col>
         </v-row>
@@ -107,7 +132,6 @@
             :headers="table.headers"
             :items="table.data"
             :loading="loadingTrades"
-            :mobile="xs"
             density="compact"
             hide-default-footer
             class="trade-details-table"
@@ -142,14 +166,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useStockStore } from '@/composables/useStockStore';
 import { db } from '@/db/stockDB';
 import { TradeDirection } from '@/enums/trade-direction';
 import type { StockPosition, TradeRecord } from '@/types/trading';
 import { FormatUtil } from '@/utils/formatUtil';
 import { PortfolioService } from '@/services/portfolioService';
-import { useDisplay } from 'vuetify';
+import { DateUtils } from '@/utils/dateUtils';
+import { ProfitLossUtil } from '@/utils/profitLossUtil';
+import { useTradingData } from '@/composables/useTradingData';
 
 // Emits
 const emit = defineEmits<{
@@ -161,10 +187,10 @@ const position = defineModel<StockPosition>({required: true});
 
 // Composables
 const { getStockData } = useStockStore();
+const { loadTradingData } = useTradingData();
 
 // 使用統一的格式化工具
 const { formatPrice, formatCurrency, formatPercentage } = FormatUtil;
-const {xs} = useDisplay();
 
 // 交易明細狀態
 const isExpanded = ref(false);
@@ -195,24 +221,25 @@ const table = computed<{
   }>;
 }>(() => {
   const processedData = tradeRecords.value.map(item => {
+    const isBuy = item.direction === TradeDirection.BUY;
     const pnl = calculateTradePnL(item);
-    const performance = calculateTradePerformance(item);
+    const performance = isBuy ? 0 : calculateTradePerformance(item);
     
     return {
       ...item,
       // 格式化後的顯示值
-      traded_at_display: formatDate(item.traded_at),
-      direction_display: item.direction === TradeDirection.BUY ? '買進' : '賣出',
+      traded_at_display: DateUtils.formatDate(item.traded_at),
+      direction_display: isBuy ? '買進' : '賣出',
       price_display: formatPrice(item.price),
       fee_display: formatCurrency(item.fee),
-      tax_display: formatCurrency(item.tax),
-      pnl_display: formatCurrency(pnl),
+      tax_display: isBuy ? '-' : formatCurrency(item.tax),
+      pnl_display: isBuy ? '-' : formatCurrency(pnl),
       performance_display: formatPercentage(performance),
       
       // 樣式類別
-      direction_class: item.direction === TradeDirection.BUY ? 'trade-direction-buy' : 'trade-direction-sell',
-      pnl_class: getPnLColor(pnl),
-      performance_class: getPnLColor(performance)
+      direction_class: isBuy ? 'trade-direction-buy' : 'trade-direction-sell',
+      pnl_class: isBuy ? '' : getPnLColor(pnl),
+      performance_class: isBuy ? '' : getPnLColor(performance)
     };
   });
 
@@ -223,49 +250,63 @@ const table = computed<{
         title: '交易日期',
         key: 'traded_at_display',
         width: '120px',
-        sortable: false
+        sortable: false,
+        cellProps: {class: 'text-no-wrap'}
       },
       {
         title: '交易方向',
         key: 'direction_display',
         width: '120px',
-        sortable: false
+        sortable: false,
+        headerProps: {class: 'text-no-wrap'},
+        cellProps: {class: 'text-no-wrap'}
       },
       {
         title: '數量(股)',
         key: 'quantity',
         width: '120px',
-        sortable: false
+        sortable: false,
+        headerProps: {class: 'text-no-wrap'}
       },
       {
         title: '價格',
         key: 'price_display',
         width: '100px',
-        sortable: false
+        sortable: false,
+        headerProps: {class: 'text-no-wrap'},
+        cellProps: {class: 'text-no-wrap'}
       },
       {
         title: '手續費',
         key: 'fee_display',
         width: '100px',
-        sortable: false
+        sortable: false,
+        headerProps: {class: 'text-no-wrap'},
+        cellProps: {class: 'text-no-wrap'}
       },
       {
         title: '交易稅',
         key: 'tax_display',
         width: '100px',
-        sortable: false
+        sortable: false,
+        headerProps: {class: 'text-no-wrap'},
+        cellProps: {class: 'text-no-wrap'}
       },
       {
         title: '損益',
         key: 'pnl_display',
         width: '100px',
-        sortable: false
+        sortable: false,
+        headerProps: {class: 'text-no-wrap'},
+        cellProps: {class: 'text-no-wrap'}
       },
       {
         title: '績效',
         key: 'performance_display',
         width: '100px',
-        sortable: false
+        sortable: false,
+        headerProps: {class: 'text-no-wrap'},
+        cellProps: {class: 'text-no-wrap'}
       },
       {
         title: '操作',
@@ -283,24 +324,26 @@ const getCurrentPrice = (ticker: string): number => {
   return stockData?.price || 0;
 };
 
-// 取得股票價格顏色
-const getStockPriceColor = (ticker: string): string => {
-  const stockData = getStockData(ticker);
-  if (!stockData) return 'text-grey';
-  
-  if (stockData.change > 0) return 'text-error'; // 漲紅
-  if (stockData.change < 0) return 'text-success'; // 跌綠
-  return 'text-grey';
-};
-
 // 取得損益顏色 - 使用 PortfolioService
 const getPnLColor = PortfolioService.getPnLColor;
+
+// 取得現價顏色
+const getCurrentPriceColor = (position: StockPosition): string => {
+  const {ticker, avgBuyPrice} = position;
+
+  const stockData = getStockData(ticker);
+  if (!stockData) return 'text-grey';
+
+  const currentPrice = stockData.price - avgBuyPrice;
+
+  return getPnLColor(currentPrice);
+};
 
 // 計算已實現績效百分比 - 使用 PortfolioService
 const calculateRealizedPerformance = (position: StockPosition): number => {
   return PortfolioService.calculateRealizedPerformancePercentage(
     position.realizedPnL, 
-    position.totalSoldCost
+    position.totalBuyAmount
   );
 };
 
@@ -331,6 +374,38 @@ const toggleExpanded = async () => {
   }
 };
 
+// 重新載入交易明細 (供外部調用)
+const reloadTradeRecords = async () => {
+  if (isExpanded.value) {
+    await loadTradeRecords();
+  }
+};
+
+// 監聽 position 變化，自動更新交易明細
+watch(
+  () => position.value,
+  (newPosition, oldPosition) => {
+    // 當持倉資料更新時，且交易明細已展開，則重新載入
+    if (newPosition && oldPosition && isExpanded.value) {
+      // 檢查是否有實質變化（避免不必要的重載）
+      const hasSignificantChange = 
+        newPosition.holdingQuantity !== oldPosition.holdingQuantity ||
+        newPosition.realizedPnL !== oldPosition.realizedPnL ||
+        newPosition.unrealizedPnL !== oldPosition.unrealizedPnL;
+      
+      if (hasSignificantChange) {
+        reloadTradeRecords();
+      }
+    }
+  },
+  { deep: true }
+);
+
+// 暴露方法供父組件調用
+defineExpose({
+  reloadTradeRecords
+});
+
 // 載入交易記錄
 const loadTradeRecords = async () => {
   try {
@@ -343,48 +418,54 @@ const loadTradeRecords = async () => {
   }
 };
 
-// 格式化日期
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('zh-TW', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  });
+
+// 取得當時的平均買入價格 (賣出當下的倉位均價)
+const getCurrentAvgBuyPrice = (ticker: string): number => {
+  // 從當前持倉獲取平均買入價格
+  return position.value.avgBuyPrice || 0;
 };
 
 // 計算單筆交易損益
 const calculateTradePnL = (trade: TradeRecord): number => {
-  const amount = trade.price * trade.quantity;
-  
   if (trade.direction === TradeDirection.BUY) {
-    // 買進交易的損益計算基於目前價格
+    // 買進交易：計算未實現損益 (基於目前價格)
     const currentPrice = getCurrentPrice(trade.ticker);
-    const currentValue = currentPrice * trade.quantity;
-    return currentValue - amount - trade.fee;
+    const buyInitialCost = ProfitLossUtil.calculateInitialCost(
+      trade.price, trade.quantity, trade.fee
+    );
+    const currentValue = ProfitLossUtil.calculateCurrentValue(
+      currentPrice, trade.quantity
+    );
+    return ProfitLossUtil.calculateProfitLoss(currentValue, buyInitialCost);
   } else {
-    // 賣出交易的實際收入
-    return amount - trade.fee - trade.tax;
+    // 賣出交易：已實現損益 = (賣出價 − 均價) × 賣出股數 − 稅 − 手續費
+    const avgPrice = getCurrentAvgBuyPrice(trade.ticker);
+    return (trade.price - avgPrice) * trade.quantity - trade.fee - trade.tax;
   }
 };
 
 // 計算單筆交易績效
 const calculateTradePerformance = (trade: TradeRecord): number => {
-  const amount = trade.price * trade.quantity;
   const pnl = calculateTradePnL(trade);
   
   if (trade.direction === TradeDirection.BUY) {
-    const cost = amount + trade.fee;
-    return cost > 0 ? (pnl / cost) * 100 : 0;
+    // 買進交易：基於初始成本計算績效
+    const initialCost = ProfitLossUtil.calculateInitialCost(
+      trade.price, trade.quantity, trade.fee
+    );
+    return ProfitLossUtil.calculateProfitLossPercentage(pnl, initialCost);
   } else {
-    // 賣出交易的績效需要基於原始買入成本計算
-    // 這裡簡化處理，基於賣出金額計算
-    return amount > 0 ? (pnl / amount) * 100 : 0;
+    // 賣出交易：基於賣出的成本計算績效
+    // 分母 = avgBuyPrice × 賣出股數
+    const avgPrice = getCurrentAvgBuyPrice(trade.ticker);
+    const sellCost = avgPrice * trade.quantity;
+    return ProfitLossUtil.calculateProfitLossPercentage(pnl, sellCost);
   }
 };
 
 // 確認刪除交易記錄
 const confirmDeleteTrade = async (trade: TradeRecord) => {
-  if (confirm(`確定要刪除此筆交易記錄嗎？\n\n${trade.direction === TradeDirection.BUY ? '買進' : '賣出'} ${trade.quantity} 股 @ ${formatPrice(trade.price)}\n交易日期: ${formatDate(trade.traded_at)}`)) {
+  if (confirm(`確定要刪除此筆交易記錄嗎？\n\n${trade.direction === TradeDirection.BUY ? '買進' : '賣出'} ${trade.quantity} 股 @ ${formatPrice(trade.price)}\n交易日期: ${DateUtils.formatDate(trade.traded_at)}`)) {
     await deleteTrade(trade);
   }
 };
@@ -406,7 +487,10 @@ const deleteTrade = async (trade: TradeRecord) => {
       tradeRecords.value.splice(index, 1);
     }
     
-    // 發出事件通知父組件重新載入交易資料
+    // 使用 useTradingData 統一重新載入交易資料
+    await loadTradingData();
+    
+    // 發出事件通知父組件 (保持向後相容)
     emit('tradeDeleted', trade.ticker);
     
   } catch (error) {
