@@ -321,7 +321,7 @@ const table = computed<{
 // 取得股票目前價格
 const getCurrentPrice = (ticker: string): number => {
   const stockData = getStockData(ticker);
-  return stockData?.price || 0;
+  return stockData?.currentPrice || 0;
 };
 
 // 取得損益顏色 - 使用 PortfolioService
@@ -334,7 +334,7 @@ const getCurrentPriceColor = (position: StockPosition): string => {
   const stockData = getStockData(ticker);
   if (!stockData) return 'text-grey';
 
-  const currentPrice = stockData.price - avgBuyPrice;
+  const currentPrice = stockData.currentPrice - avgBuyPrice;
 
   return getPnLColor(currentPrice);
 };
