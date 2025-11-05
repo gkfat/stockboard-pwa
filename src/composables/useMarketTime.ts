@@ -17,8 +17,7 @@ export function useMarketTime() {
   return {
     currentTime,
     // 判斷是否為開市時間
-    isMarketOpen: ref(true),
-    // isMarketOpen: computed(() => DateUtils.isMarketOpen(currentTime.value)),
+    isMarketOpen: computed(() => DateUtils.isMarketOpen(currentTime.value)),
     startTimeUpdater
   };
 }

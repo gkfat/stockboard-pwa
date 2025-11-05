@@ -40,20 +40,10 @@
           <v-col cols="6">
             <v-card variant="tonal">
               <v-card-text class="text-center">
-                <v-chip
-                  :color="getPnLColor(stock.change)"
-                  size="large"
-                >
-                  <v-icon
-                    v-if="stock.change !== 0"
-                    start
-                    size="small"
-                  >
-                    {{ getChangeIcon(stock.change) }}
-                  </v-icon>
-                  {{ formatChange(stock.change) }}
-                  ({{ formatPercent(stock.changePercent) }})
-                </v-chip>
+                <PnLChip
+                  :stock="stock"
+                  :size="'large'"
+                />
                 <div class="text-body-2 text-medium-emphasis mt-1">
                   漲跌幅
                 </div>
@@ -192,26 +182,22 @@
 import { ref, computed, watch, nextTick } from 'vue';
 import type { StockInfo } from '@/types/stock';
 import { useStockPriceHistory } from '@/composables/useStockPriceHistory';
-import { FormatUtil } from '@/utils/formatUtil';
-import { TradingCostUtil } from '@/utils/tradingCostUtil';
 import { useStockStore } from '@/composables/useStockStore';
 import { INTERVAL_SECONDS } from '@/constants';
 import { Chart } from 'chart.js';
 import { setupChart } from '@/utils/setupChart';
+import PnLChip from './PnLChip.vue';
+import FormatUtil from '@/utils/formatUtil';
 
 setupChart();
 
 const showDialog = defineModel<boolean>('showStockDetailDialog');
 const stock = defineModel<StockInfo | null>('stock', {default: null});
 
-// 取得損益顏色 - 使用 PnLUtil 統一邏輯
-const getPnLColor = (val: number) => {
-  return TradingCostUtil.getPnLColor(val).replace('text-', '');
-};
-
 // Store
 const { loadPriceHistory, getStockTrend } = useStockPriceHistory();
 const { getStockData } = useStockStore();
+const { formatPrice } = FormatUtil;
 
 // 響應式狀態
 const priceChartCanvas = ref<HTMLCanvasElement>();
@@ -388,19 +374,6 @@ const loadChartData = async () => {
   }
 };
 
-// 使用統一的格式化工具
-const { formatPrice, formatChange } = FormatUtil;
-
-// 百分比格式化（保持原有命名）
-const formatPercent = (percent: number): string => {
-  return FormatUtil.formatPercentage(percent);
-};
-
-const getChangeIcon = (change: number): string => {
-  if (change > 0) return 'mdi-triangle';
-  if (change < 0) return 'mdi-triangle-down';
-  return '';
-};
 
 // 監聽器
 watch(showDialog, (newValue) => {

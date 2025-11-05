@@ -64,8 +64,7 @@ export const formatPercentage = (percentage: number, decimalPlaces = 2): string 
  * @returns 格式化的漲跌字串
  */
 export const formatChange = (change: number, decimalPlaces = 2): string => {
-  const sign = change >= 0 ? '+' : '';
-  return `${sign}${change.toFixed(decimalPlaces)}`;
+  return change.toFixed(decimalPlaces);
 };
 
 /**

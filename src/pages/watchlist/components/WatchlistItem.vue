@@ -41,7 +41,7 @@
             <v-row class="flex-column ma-0">
               <!-- 股價 -->
               <v-col
-                class="text-subtitle-1 font-weight-bold text-right pa-0"
+                class="text-subtitle-1 font-weight-bold text-right pa-0 pe-3"
                 :class="getPnLColorClass(stock.change)"
               >
                 {{ formatPrice(stock.currentPrice) }}
@@ -49,18 +49,10 @@
               
               <!-- 漲跌資訊 -->
               <v-col class="d-flex justify-end pa-0 ga-3">
-                <p
-                  class="text-caption font-weight-medium"
-                  :class="getPnLColorClass(stock.change)"
-                >
-                  {{ formatPrice(stock.change) }}
-                </p>
-                <p
-                  class="text-caption font-weight-medium"
-                  :class="getPnLColorClass(stock.changePercent)"
-                >
-                  {{ formatPercent(stock.changePercent) }}
-                </p>
+                <PnLChip
+                  :stock="stock"
+                  :variant="'text'"
+                />
               </v-col>
             </v-row>
           </template>
@@ -88,6 +80,7 @@ import { computed } from 'vue';
 import type { StockInfo } from '@/types/stock';
 import { FormatUtil } from '@/utils/formatUtil';
 import { TradingCostUtil } from '@/utils/tradingCostUtil';
+import PnLChip from './PnLChip.vue';
 
 // Emits
 const emit = defineEmits<{
@@ -108,11 +101,7 @@ const isLoading = computed(() => {
 });
 
 // 格式化函數
-const { formatPrice, formatPercentage } = FormatUtil;
-
-const formatPercent = (percent: number): string => {
-  return formatPercentage(percent);
-};
+const { formatPrice } = FormatUtil;
 </script>
 
 <style scoped>
