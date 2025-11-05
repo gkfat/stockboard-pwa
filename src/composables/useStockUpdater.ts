@@ -1,10 +1,12 @@
-import { ref } from 'vue';
 import { useStockApi } from './useStockApi';
 import { useStockStore } from './useStockStore';
 import { useWatchlistState } from './useWatchlistState';
 import { useMarketTime } from './useMarketTime';
-import { useStockPrice } from './useStockPrice';
+import { useStockPriceHistory } from './useStockPriceHistory';
 import { CACHE_CONFIG } from '@/constants';
+
+// 全域單例狀態，防止重複註冊 interval
+let updaterInterval: ReturnType<typeof setInterval> | null = null;
 
 /**
  * 股票資料自動更新邏輯
@@ -14,13 +16,8 @@ export function useStockUpdater() {
   const { updateStockData, setUpdatingState, isUpdating } = useStockStore();
   const { stockCodes } = useWatchlistState();
   const { isMarketOpen } = useMarketTime();
-  const { savePriceHistory } = useStockPrice();
+  const { savePriceHistory } = useStockPriceHistory();
 
-  // === Singleton State ===
-  // 全域單例狀態，防止重複註冊 interval
-  let globalUpdateInterval: ReturnType<typeof setInterval> | null = null;
-  const globalIsAutoUpdateEnabled = ref(false);
-  const UPDATE_INTERVAL = CACHE_CONFIG.STOCK_DATA_DURATION; // 使用統一常數
 
   // 更新所有自選股報價
   const updateAllStocks = async () => {
@@ -32,7 +29,7 @@ export function useStockUpdater() {
     setUpdatingState(true, null);
 
     try {
-      console.log('[StockUpdater] 開始更新股票資料');
+      console.log('[StockUpdater] 更新一次所有股票資料');
       
       const stockInfos = await fetchMultipleStocks(codes);
       
@@ -41,7 +38,7 @@ export function useStockUpdater() {
 
       // 非同步儲存價格歷史，不阻塞 UI 更新
       if (isMarketOpen.value && stockInfos.length > 0) {
-        savePriceHistory(stockInfos, true).catch(error => {
+        savePriceHistory(stockInfos).catch(error => {
           console.warn('[StockUpdater] WARN 價格歷史儲存失敗:', error);
         });
       }
@@ -60,55 +57,38 @@ export function useStockUpdater() {
   // 啟動自動更新（全域單例）
   const startAutoUpdate = () => {
     // 如果已經在自動更新，不重複啟動
-    if (globalIsAutoUpdateEnabled.value && globalUpdateInterval) {
+    if (updaterInterval) {
       console.log('[StockUpdater] ⚠️ 自動更新已在運行中，跳過重複啟動');
       return;
     }
 
-    // 清理現有的 interval（防止記憶體洩漏）
-    if (globalUpdateInterval) {
-      clearInterval(globalUpdateInterval);
-    }
-
-    globalIsAutoUpdateEnabled.value = true;
     console.log('[StockUpdater] ▶️ 啟動自動更新');
 
     // 立即執行一次更新
     updateAllStocks();
 
     // 設定定時更新
-    globalUpdateInterval = setInterval(() => {
+    updaterInterval = setInterval(() => {
       if (stockCodes.value.length > 0) {
         updateAllStocks();
       } else {
         console.log('[StockUpdater] 📝 觀察清單為空，跳過更新');
       }
-    }, UPDATE_INTERVAL);
+    }, CACHE_CONFIG.STOCK_DATA_DURATION);
   };
 
-  // 停止自動更新（全域單例）
+  // 停止自動更新
   const stopAutoUpdate = () => {
-    if (globalUpdateInterval) {
-      clearInterval(globalUpdateInterval);
-      globalUpdateInterval = null;
+    if (updaterInterval) {
+      clearInterval(updaterInterval);
+      updaterInterval = null;
+      console.log('[StockUpdater] ⏹️ 自動更新已停止');
     }
-    globalIsAutoUpdateEnabled.value = false;
-    console.log('[StockUpdater] ⏹️ 自動更新已停止');
-  };
-
-  // 檢查自動更新狀態
-  const isAutoUpdateRunning = () => {
-    return globalIsAutoUpdateEnabled.value && globalUpdateInterval !== null;
   };
 
   return {
-    // 狀態
-    isAutoUpdateEnabled: globalIsAutoUpdateEnabled,
-    
-    // 方法
     updateAllStocks,
     startAutoUpdate,
-    stopAutoUpdate,
-    isAutoUpdateRunning
+    stopAutoUpdate
   };
 }

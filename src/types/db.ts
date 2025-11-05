@@ -19,13 +19,13 @@ export interface WatchListItem {
 /**
  * 股票價格記錄
  */
-export interface StockPrice {
+export interface HistoryPrice {
   id?: number; // 自動遞增主鍵
   code: string; // 股票代號
+  date: string; // 日期，格式：YYYY-MM-DD
   time: string; // 時間
   price: number; // 價格
   volume: number; // 成交量
-  date: string; // 日期，格式：YYYY-MM-DD
 }
 
 /**
@@ -61,7 +61,7 @@ export interface WatchlistQueryParams {
  */
 export interface DbTableTypes {
   watchlist: WatchListItem;
-  prices: StockPrice;
+  prices: HistoryPrice;
 }
 
 /**

@@ -129,7 +129,7 @@ import { DateUtils } from '@/utils/dateUtils';
 import StockDetailDialog from './components/StockDetailDialog.vue';
 import { useMarketTime } from '@/composables/useMarketTime';
 
-const { updateAllStocks, startAutoUpdate } = useStockUpdater();
+const { updateAllStocks, startAutoUpdate, stopAutoUpdate } = useStockUpdater();
 const { isMarketOpen } = useMarketTime();
 const { watchlist } = useWatchlistState();
 const { removeStock, initializeWatchlist } = useWatchlistActions();
@@ -150,7 +150,7 @@ const stockList = computed(() => {
       return {
         code: item.code,
         name: item.name,
-        price: 0,
+        currentPrice: 0,
         change: 0,
         changePercent: 0,
         volume: 0,
@@ -158,8 +158,15 @@ const stockList = computed(() => {
         high: 0,
         low: 0,
         open: 0,
-        previousClose: 0
-      };
+        previousClose: 0,
+        totalVolume: 0,
+        tradingDate: '',
+        tradingTime: '',
+        highPrice: 0,
+        lowPrice: 0,
+        openPrice: 0,
+        yesterdayPrice: 0
+      } as StockInfo;
     }
     return stockInfo;
   });
@@ -195,6 +202,8 @@ watch(
   (val) => {
     if (val) {
       startAutoUpdate();
+    } else {
+      stopAutoUpdate();
     }
   },
   { immediate: true }

@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import type { WatchListItem, StockPrice } from '@/types/db';
+import type { WatchListItem, HistoryPrice } from '@/types/db';
 import type { TradeRecord } from '@/types/trading';
 
 // DB 操作 Logger
@@ -19,7 +19,7 @@ const logger = new DBLogger();
 
 export class StockDB extends Dexie {
   watchlist!: Table<WatchListItem, string>;
-  prices!: Table<StockPrice, number>;
+  prices!: Table<HistoryPrice, number>;
   trades!: Table<TradeRecord, string>;
 
   constructor() {

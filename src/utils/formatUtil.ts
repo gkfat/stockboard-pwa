@@ -10,7 +10,11 @@
  * @returns 格式化的價格字串
  */
 export const formatPrice = (price: number): string => {
-  return price.toFixed(2);
+  try {
+    return price.toFixed(2);
+  } catch {
+    return 'N/A';
+  }
 };
 
 /**

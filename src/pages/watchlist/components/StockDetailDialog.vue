@@ -29,7 +29,7 @@
             <v-card variant="tonal">
               <v-card-text class="text-center">
                 <div class="text-h4 font-weight-bold">
-                  {{ formatPrice(stock.price) }}
+                  {{ formatPrice(stock.currentPrice) }}
                 </div>
                 <div class="text-body-2 text-medium-emphasis">
                   當前股價
@@ -42,10 +42,10 @@
               <v-card-text class="text-center">
                 <v-chip
                   :color="getPnLColor(stock.change)"
-                  variant="elevated"
                   size="large"
                 >
                   <v-icon
+                    v-if="stock.change !== 0"
                     start
                     size="small"
                   >
@@ -202,10 +202,10 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
-import { useStockPrice } from '@/composables/useStockPrice';
-import { useStock } from '@/composables/useStock';
+import { useStockPriceHistory } from '@/composables/useStockPriceHistory';
 import { FormatUtil } from '@/utils/formatUtil';
 import { TradingCostUtil } from '@/utils/tradingCostUtil';
+import { useStockStore } from '@/composables/useStockStore';
 
 const showDialog = defineModel<boolean>('showStockDetailDialog');
 const stock = defineModel<StockInfo | null>('stock', {default: null});
@@ -228,8 +228,8 @@ Chart.register(
 );
 
 // Store
-const {loadPriceHistory, getStockTrend} = useStockPrice();
-const {getStockData} = useStock();
+const { loadPriceHistory, getStockTrend } = useStockPriceHistory();
+const { getStockData } = useStockStore();
 
 // 響應式狀態
 const chartCanvas = ref<HTMLCanvasElement>();
@@ -248,7 +248,7 @@ const chartData = computed(() => {
 });
 
 const hasChartData = computed(() => {
-  return chartData.value?.hasHistory || false;
+  return chartData.value?.hasHistory ?? false;
 });
 
 // 方法
@@ -362,9 +362,9 @@ const formatPercent = (percent: number): string => {
 };
 
 const getChangeIcon = (change: number): string => {
-  if (change > 0) return 'mdi-trending-up';
-  if (change < 0) return 'mdi-trending-down';
-  return 'mdi-trending-neutral';
+  if (change > 0) return 'mdi-triangle';
+  if (change < 0) return 'mdi-triangle-down';
+  return '';
 };
 
 // 監聽器

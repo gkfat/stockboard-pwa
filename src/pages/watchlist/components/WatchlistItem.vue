@@ -44,7 +44,7 @@
                 class="text-subtitle-1 font-weight-bold text-right pa-0"
                 :class="getPnLColorClass(stock.change)"
               >
-                {{ formatPrice(stock.price) }}
+                {{ formatPrice(stock.currentPrice) }}
               </v-col>
               
               <!-- 漲跌資訊 -->
@@ -53,7 +53,7 @@
                   class="text-caption font-weight-medium"
                   :class="getPnLColorClass(stock.change)"
                 >
-                  {{ formatChange(stock.change) }}
+                  {{ formatPrice(stock.change) }}
                 </p>
                 <p
                   class="text-caption font-weight-medium"
@@ -108,7 +108,7 @@ const isLoading = computed(() => {
 });
 
 // 格式化函數
-const { formatPrice, formatChange, formatPercentage } = FormatUtil;
+const { formatPrice, formatPercentage } = FormatUtil;
 
 const formatPercent = (percent: number): string => {
   return formatPercentage(percent);

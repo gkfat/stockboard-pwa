@@ -14,18 +14,25 @@ export function useStockApi() {
   /**
    * 將 ProcessedStockInfo 轉換為 StockInfo 格式 (向後相容)
    */
-  const transformToStockInfo = (processed: ProcessedStockInfo): StockInfo => {
+  const transformToStockInfo = (data: ProcessedStockInfo): StockInfo => {
+    console.log(data);
     return {
-      code: processed.code,
-      name: processed.name,
-      price: processed.currentPrice,
-      change: processed.change,
-      changePercent: processed.changePercent,
-      volume: processed.totalVolume,
-      updatedAt: processed.updatedAt
+      code: data.code,
+      name: data.name,
+      currentPrice: data.currentPrice,
+      change: data.change,
+      changePercent: data.changePercent,
+      volume: data.totalVolume,
+      totalVolume: data.totalVolume,
+      updatedAt: data.updatedAt,
+      tradingDate: data.tradingDate,
+      tradingTime: data.tradingTime,
+      yesterdayPrice: data.yesterdayPrice,
+      highPrice: data.highPrice,
+      lowPrice: data.lowPrice,
+      openPrice: data.openPrice
     };
   };
-
 
   /**
    * 批量取得多支股票資訊

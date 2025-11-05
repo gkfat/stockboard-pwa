@@ -1,24 +1,24 @@
 import { ref } from 'vue';
 import { db } from '@/db/stockDB';
-import type { StockPrice, PriceQueryParams } from '@/types/db';
+import type { HistoryPrice, PriceQueryParams } from '@/types/db';
 import { StockInfo } from '@/types/stock';
 import { DateUtils } from '@/utils/dateUtils';
 
-export function useStockPrice() {
+// 價格歷史資料管理
+const priceHistories = ref<Record<string, HistoryPrice[]>>({});
+
+export function useStockPriceHistory() {
   const loading = ref(false);
   const error = ref<string | null>(null);
-  
-  // 價格歷史資料管理
-  const priceHistories = ref<Record<string, any[]>>({});
 
   // Price 操作包裝器
   const priceOps = {
-    async bulkAdd(prices: StockPrice[]) {
+    async bulkAdd(prices: HistoryPrice[]) {
       try {
         const result = await db.prices.bulkAdd(prices);
         return result;
       } catch (error) {
-        console.error('[StockPrice] ERROR Failed to bulk add prices', error);
+        console.error('[StockPriceHistory] ERROR Failed to bulk add prices', error);
         throw error;
       }
     },
@@ -32,7 +32,7 @@ export function useStockPrice() {
           .toArray();
         return result;
       } catch (error) {
-        console.error(`[StockPrice] ERROR Failed to fetch prices for ${code}`, error);
+        console.error(`[StockPriceHistory] ERROR Failed to fetch prices for ${code}`, error);
         throw error;
       }
     },
@@ -42,7 +42,7 @@ export function useStockPrice() {
         const result = await db.prices.where('date').below(beforeDate).delete();
         return result;
       } catch (error) {
-        console.error('[StockPrice] ERROR Failed to clean old records', error);
+        console.error('[StockPriceHistory] ERROR Failed to clean old records', error);
         throw error;
       }
     },
@@ -60,7 +60,7 @@ export function useStockPrice() {
         const result = await query.toArray();
         return result;
       } catch (error) {
-        console.error(`[StockPrice] ERROR Failed to fetch prices for ${code}`, error);
+        console.error(`[StockPriceHistory] ERROR Failed to fetch prices for ${code}`, error);
         throw error;
       }
     },
@@ -70,7 +70,7 @@ export function useStockPrice() {
         const result = await db.prices.clear();
         return result;
       } catch (error) {
-        console.error('[StockPrice] ERROR Failed to clear prices', error);
+        console.error('[StockPriceHistory] ERROR Failed to clear prices', error);
         throw error;
       }
     }
@@ -79,42 +79,27 @@ export function useStockPrice() {
   // 載入特定股票的歷史資料
   const loadPriceHistory = async (stockCode: string, date?: string) => {
     try {
-      const targetDate = date || new Date().toISOString().split('T')[0];
+      const targetDate = date ?? DateUtils.now().format('YYYY-MM-DD');
       
       const history = await priceOps.getByCodeAndDate(stockCode, targetDate);
 
       priceHistories.value[stockCode] = history;
       return history;
     } catch (error) {
-      console.error('[StockPrice] ERROR 載入價格歷史失敗:', error);
+      console.error('[StockPriceHistory] ERROR 載入價格歷史失敗:', error);
       return [];
     }
   };
 
-  // 清除舊的價格歷史（保留最近7天）
-  const cleanOldPriceHistory = async () => {
-    try {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const cutoffDate = sevenDaysAgo.toISOString().split('T')[0];
-
-      await priceOps.deleteOldRecords(cutoffDate);
-    } catch (error) {
-      console.error('[StockPrice] ERROR 清理舊資料失敗:', error);
-    }
-  };
-
   // 儲存價格歷史
-  const savePriceHistory = async (stockInfos: StockInfo[], isMarketOpen: boolean) => {
-    if (!isMarketOpen) return;
-
+  const savePriceHistory = async (stockInfos: StockInfo[]) => {
     try {
-      const now = DateUtils.createDate();
+      const now = DateUtils.now();
 
       const priceRecords = stockInfos.map(stock => ({
         code: stock.code,
         time: now.format('HH:mm:ss'),
-        price: stock.price,
+        price: stock.currentPrice,
         volume: stock.volume,
         date: now.format('YYYY-MM-DD')
       }));
@@ -131,7 +116,7 @@ export function useStockPrice() {
       });
 
     } catch (error) {
-      console.error('[StockPrice] ERROR 儲存價格歷史失敗:', error);
+      console.error('[StockPriceHistory] ERROR 儲存價格歷史失敗:', error);
     }
   };
 
@@ -152,9 +137,7 @@ export function useStockPrice() {
     loading,
     error,
     priceHistories,
-    priceOps,
     loadPriceHistory,
-    cleanOldPriceHistory,
     savePriceHistory,
     getStockTrend
   };

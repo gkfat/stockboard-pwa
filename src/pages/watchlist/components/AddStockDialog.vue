@@ -58,7 +58,7 @@
                 </div>
                 <div class="text-right">
                   <div class="text-h6">
-                    {{ formatPrice(searchResult.price) }}
+                    {{ formatPrice(searchResult.currentPrice) }}
                   </div>
                   <v-chip
                     :color="getPnLColor(searchResult.change)"
@@ -97,12 +97,12 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { useStock } from '@/composables/useStock';
 import { FormatUtil } from '@/utils/formatUtil';
 import { useWatchlistActions } from '@/composables/useWatchlistActions';
 import type { StockInfo } from '@/types/stock';
 import { TradingCostUtil } from '@/utils/tradingCostUtil';
 import { useWatchlistRules } from '../composables/useWatchlistRules';
+import { useStockApi } from '@/composables/useStockApi';
 
 const emit = defineEmits<{
   'added': []
@@ -114,7 +114,7 @@ const showDialog = defineModel<boolean>();
 const getPnLColor = TradingCostUtil.getPnLColor;
 
 // Composables
-const { fetchMultipleStocks } = useStock();
+const { fetchMultipleStocks } = useStockApi();
 const { addStock: addStockToWatchlist } = useWatchlistActions();
 
 // 響應式狀態
