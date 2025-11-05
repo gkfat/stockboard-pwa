@@ -38,7 +38,7 @@
         <v-row>
           <v-col
             cols="6"
-            sm="6"
+            sm="4"
             md="2"
           >
             <div class="text-caption text-grey">
@@ -49,8 +49,8 @@
             </div>
           </v-col>
           <v-col
-            cols="12"
-            sm="6"
+            cols="6"
+            sm="4"
             md="2"
           >
             <div class="text-caption text-grey">
