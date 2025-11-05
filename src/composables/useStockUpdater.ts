@@ -96,12 +96,6 @@ export function useStockUpdater() {
     console.log('[StockUpdater] ⏹️ 自動更新已停止');
   };
 
-  // 手動強制更新
-  const forceUpdate = async () => {
-    console.log('[StockUpdater] 手動強制更新');
-    return await updateAllStocks();
-  };
-
   // 檢查自動更新狀態
   const isAutoUpdateRunning = () => {
     return globalIsAutoUpdateEnabled.value && globalUpdateInterval !== null;
@@ -115,7 +109,6 @@ export function useStockUpdater() {
     updateAllStocks,
     startAutoUpdate,
     stopAutoUpdate,
-    forceUpdate,
     isAutoUpdateRunning
   };
 }

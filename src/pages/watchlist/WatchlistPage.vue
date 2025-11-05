@@ -51,7 +51,7 @@
               mdi-clock-outline
             </v-icon>
             <span class="text-body-2">
-              {{ formattedUpdateTime }}
+              {{ DateUtils.formatLastUpdateTime(lastUpdateTime) }}
             </span>
           </div>
           <v-icon
@@ -127,8 +127,10 @@ import { useStockStore } from '@/composables/useStockStore';
 import { useStockUpdater } from '@/composables/useStockUpdater';
 import { DateUtils } from '@/utils/dateUtils';
 import StockDetailDialog from './components/StockDetailDialog.vue';
+import { useMarketTime } from '@/composables/useMarketTime';
 
-const { startAutoUpdate, forceUpdate } = useStockUpdater();
+const { updateAllStocks, startAutoUpdate } = useStockUpdater();
+const { isMarketOpen } = useMarketTime();
 const { watchlist } = useWatchlistState();
 const { removeStock, initializeWatchlist } = useWatchlistActions();
 const { getStockData, lastUpdateTime, isUpdating } = useStockStore();
@@ -163,18 +165,6 @@ const stockList = computed(() => {
   });
 });
 
-// 格式化更新時間 (依據 spec.md 格式要求)
-const formattedUpdateTime = computed(() => {
-  if (!lastUpdateTime.value) return '未取得更新時間';
-  
-  try {
-    return DateUtils.formatLastUpdateTime(lastUpdateTime.value);
-  } catch (error) {
-    console.error('[WatchlistPage] Date formatting error:', error, lastUpdateTime.value);
-    return '未取得更新時間';
-  }
-});
-
 // 事件處理
 const handleStockClick = (stock: StockInfo) => {
   selectedStock.value = stock;
@@ -195,14 +185,24 @@ const handleStockAdded = () => {
 watch(
   () => watchlist.value.length,
   () => {
-    forceUpdate();
+    updateAllStocks();
+  },
+  { immediate: true }
+);
+
+watch(
+  isMarketOpen,
+  (val) => {
+    if (val) {
+      startAutoUpdate();
+    }
   },
   { immediate: true }
 );
 
 onMounted(async () => {
   await initializeWatchlist();
-  startAutoUpdate();
+  await updateAllStocks();
 });
 </script>
 

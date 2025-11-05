@@ -1,7 +1,8 @@
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/zh-tw';
 import weekday from 'dayjs/plugin/weekday';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
+import { TAIWAN_MARKET_TIME } from '@/constants';
 
 // 設定 dayjs 外掛和語系
 dayjs.extend(weekday);
@@ -53,7 +54,10 @@ export class DateUtils {
     return dayjs(date).isSame(dayjs(), 'day');
   }
 
-  static createDate() {
+  /**
+   * 取得當前時間
+   */
+  static now(): Dayjs {
     return dayjs();
   }
 
@@ -75,5 +79,20 @@ export class DateUtils {
       startDate: startDate.format('YYYY-MM-DD'),
       endDate: endDate.format('YYYY-MM-DD')
     };
+  }
+
+  /**
+   * 判斷是否為台灣股市開市時間
+   */
+  static isMarketOpen(date?: Dayjs | Date | string): boolean {
+    const targetDate = dayjs(date);
+    const day = targetDate.day();
+    const timeInMinutes = targetDate.hour() * 60 + targetDate.minute();
+
+    // 週一到週五 09:00–13:30
+    const isWeekday = day >= TAIWAN_MARKET_TIME.MONDAY && day <= TAIWAN_MARKET_TIME.FRIDAY;
+    const isInTradingHours = timeInMinutes >= TAIWAN_MARKET_TIME.TRADING_START && timeInMinutes <= TAIWAN_MARKET_TIME.TRADING_END;
+
+    return isWeekday && isInTradingHours;
   }
 }

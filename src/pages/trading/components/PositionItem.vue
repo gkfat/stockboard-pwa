@@ -418,7 +418,6 @@ const loadTradeRecords = async () => {
   }
 };
 
-
 // 取得當時的平均買入價格 (賣出當下的倉位均價)
 const getCurrentAvgBuyPrice = (ticker: string): number => {
   // 從當前持倉獲取平均買入價格

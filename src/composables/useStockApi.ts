@@ -39,7 +39,7 @@ export function useStockApi() {
 
       const processedStocks = await stockDataService.getMultipleStocks(stockCodes);
       const results = processedStocks.map(transformToStockInfo);
-      
+
       return results;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : '取得股票資料失敗';
