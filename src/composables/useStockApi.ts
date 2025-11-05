@@ -15,7 +15,7 @@ export function useStockApi() {
    * 將 ProcessedStockInfo 轉換為 StockInfo 格式 (向後相容)
    */
   const transformToStockInfo = (data: ProcessedStockInfo): StockInfo => {
-    console.log(data);
+
     return {
       code: data.code,
       name: data.name,
@@ -24,7 +24,7 @@ export function useStockApi() {
       changePercent: data.changePercent,
       volume: data.totalVolume,
       totalVolume: data.totalVolume,
-      updatedAt: data.updatedAt,
+      updatedAt: new Date(data.timestamp).toISOString(),
       tradingDate: data.tradingDate,
       tradingTime: data.tradingTime,
       yesterdayPrice: data.yesterdayPrice,
@@ -64,6 +64,7 @@ export function useStockApi() {
     error,
     
     // 方法
-    fetchMultipleStocks
+    fetchMultipleStocks,
+    transformToStockInfo
   };
 }

@@ -61,6 +61,10 @@ export class DateUtils {
     return dayjs();
   }
 
+  static createDate(date?: string): Dayjs {
+    return dayjs(date);
+  }
+
   /**
    * 格式化日期為 YYYY-MM-DD 格式
    */

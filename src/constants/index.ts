@@ -16,10 +16,8 @@ export const TAIWAN_STOCK_MARKET = {
 } as const;
 
 // 快取設定
-export const CACHE_CONFIG = {
-  /** 股票資料快取有效期：30 秒 */
-  STOCK_DATA_DURATION: 30 * 1000
-} as const;
+/** 股票資料快取有效期：30 秒 */
+export const INTERVAL_SECONDS = 30 * 1000;
 
 // 時間相關常數
 export const TIME_CONSTANTS = {
@@ -78,7 +76,7 @@ export const UI_COLORS = {
 // 匯出所有常數
 export const CONSTANTS = {
   TAIWAN_STOCK_MARKET,
-  CACHE_CONFIG,
+  INTERVAL_SECONDS,
   TIME_CONSTANTS,
   TAIWAN_MARKET_TIME,
   UI_COLORS

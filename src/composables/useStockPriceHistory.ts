@@ -94,29 +94,128 @@ export function useStockPriceHistory() {
   // 儲存價格歷史
   const savePriceHistory = async (stockInfos: StockInfo[]) => {
     try {
-      const now = DateUtils.now();
+      loading.value = true;
+      error.value = null;
 
-      const priceRecords = stockInfos.map(stock => ({
-        code: stock.code,
-        time: now.format('HH:mm:ss'),
-        price: stock.currentPrice,
-        volume: stock.volume,
-        date: now.format('YYYY-MM-DD')
-      }));
+      clearOldData();
 
-      // 儲存到 Dexie
-      await priceOps.bulkAdd(priceRecords);
+      const priceRecords = stockInfos.map(stock => {
+        const d = DateUtils.createDate(stock.updatedAt);
 
-      // 更新本地歷史資料
-      priceRecords.forEach(record => {
-        if (!priceHistories.value[record.code]) {
-          priceHistories.value[record.code] = [];
-        }
-        priceHistories.value[record.code].push(record);
+        return {
+          code: stock.code,
+          date: d.format('YYYY-MM-DD'),
+          time: d.format('HH:mm:ss'),
+          price: stock.currentPrice,
+          volume: stock.volume || 0
+        };
       });
 
-    } catch (error) {
-      console.error('[StockPriceHistory] ERROR 儲存價格歷史失敗:', error);
+      // 過濾重複資料：檢查相同 date & time & code 的記錄
+      const uniqueRecords: HistoryPrice[] = [];
+      
+      for (const record of priceRecords) {
+        const existing = await db.prices
+          .where('code').equals(record.code)
+          .and(item => item.date === record.date && item.time === record.time)
+          .first();
+
+        if (!existing) {
+          uniqueRecords.push(record);
+        } else {
+          console.log(`[StockPriceHistory] 跳過重複資料: ${record.code} ${record.date} ${record.time}`);
+        }
+      }
+
+      if (uniqueRecords.length > 0) {
+        // 儲存到 Dexie (只儲存不重複的記錄)
+        await priceOps.bulkAdd(uniqueRecords);
+        console.log(`[StockPriceHistory] 成功儲存 ${uniqueRecords.length} 筆價格資料`);
+
+        // 更新本地歷史資料
+        uniqueRecords.forEach(record => {
+          if (!priceHistories.value[record.code]) {
+            priceHistories.value[record.code] = [];
+          }
+          
+          // 檢查本地快取是否已存在
+          const localExists = priceHistories.value[record.code].some(
+            item => item.date === record.date && item.time === record.time
+          );
+          
+          if (!localExists) {
+            priceHistories.value[record.code].push(record);
+          }
+        });
+      } else {
+        console.log('[StockPriceHistory] 所有資料均為重複，未儲存新記錄');
+      }
+
+      return {
+        success: true,
+        totalRecords: priceRecords.length,
+        savedRecords: uniqueRecords.length,
+        skippedDuplicates: priceRecords.length - uniqueRecords.length
+      };
+
+    } catch (err) {
+      const errorMessage = `儲存價格歷史失敗: ${err}`;
+      console.error('[StockPriceHistory] ERROR', errorMessage);
+      error.value = errorMessage;
+      
+      return {
+        success: false,
+        error: errorMessage,
+        totalRecords: stockInfos.length,
+        savedRecords: 0,
+        skippedDuplicates: 0
+      };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // 清除舊的歷史資料
+  const clearOldData = async (cutoffDate?: string) => {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      // 若未傳入日期，則使用前 3 天作為預設值
+      const targetDate = cutoffDate || DateUtils.now().subtract(3, 'day').format('YYYY-MM-DD');
+      
+      console.log(`[StockPriceHistory] 開始清除 ${targetDate} 之前的歷史資料`);
+      
+      // 使用現有的 deleteOldRecords 方法清除資料庫中的舊資料
+      const deletedCount = await priceOps.deleteOldRecords(targetDate);
+      
+      // 清除記憶體中的歷史資料快取
+      Object.keys(priceHistories.value).forEach(stockCode => {
+        priceHistories.value[stockCode] = priceHistories.value[stockCode].filter(
+          record => record.date >= targetDate
+        );
+      });
+      
+      console.log(`[StockPriceHistory] 成功清除 ${deletedCount} 筆 ${targetDate} 之前的歷史資料`);
+      
+      return {
+        success: true,
+        deletedCount,
+        cutoffDate: targetDate
+      };
+      
+    } catch (err) {
+      const errorMessage = `清除歷史資料失敗: ${err}`;
+      console.error('[StockPriceHistory] ERROR', errorMessage);
+      error.value = errorMessage;
+      
+      return {
+        success: false,
+        error: errorMessage,
+        cutoffDate: cutoffDate || DateUtils.now().subtract(3, 'day').format('YYYY-MM-DD')
+      };
+    } finally {
+      loading.value = false;
     }
   };
 

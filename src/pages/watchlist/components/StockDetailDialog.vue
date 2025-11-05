@@ -125,7 +125,7 @@
 
                 <canvas
                   v-else
-                  ref="chartCanvas"
+                  ref="priceChartCanvas"
                   class="chart-canvas"
                 />
               </v-card-text>
@@ -166,7 +166,7 @@
 
                 <canvas
                   v-else
-                  ref="chartCanvas"
+                  ref="volumeChartCanvas"
                   class="chart-canvas"
                 />
               </v-card-text>
@@ -181,7 +181,7 @@
           class="mt-4"
         >
           圖表顯示當日 09:00-13:30 的{{ chartType === 'price' ? '價格走勢' : '成交量變化' }}，
-          數據每10秒更新一次（僅在開市時間）。
+          數據每 {{ INTERVAL_SECONDS / 1000 }} 秒更新一次（僅在開市時間）。
         </v-alert>
       </v-card-text>
     </v-card>
@@ -189,23 +189,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onUnmounted } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import type { StockInfo } from '@/types/stock';
-import {
-  Chart,
-  LineElement,
-  BarElement,
-  PointElement,
-  CategoryScale,
-  LinearScale,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js';
 import { useStockPriceHistory } from '@/composables/useStockPriceHistory';
 import { FormatUtil } from '@/utils/formatUtil';
 import { TradingCostUtil } from '@/utils/tradingCostUtil';
 import { useStockStore } from '@/composables/useStockStore';
+import { INTERVAL_SECONDS } from '@/constants';
+import { Chart } from 'chart.js';
+import { setupChart } from '@/utils/setupChart';
+
+setupChart();
 
 const showDialog = defineModel<boolean>('showStockDetailDialog');
 const stock = defineModel<StockInfo | null>('stock', {default: null});
@@ -215,27 +209,17 @@ const getPnLColor = (val: number) => {
   return TradingCostUtil.getPnLColor(val).replace('text-', '');
 };
 
-// 註冊 Chart.js 組件
-Chart.register(
-  LineElement,
-  BarElement,
-  PointElement,
-  CategoryScale,
-  LinearScale,
-  Title,
-  Tooltip,
-  Legend
-);
-
 // Store
 const { loadPriceHistory, getStockTrend } = useStockPriceHistory();
 const { getStockData } = useStockStore();
 
 // 響應式狀態
-const chartCanvas = ref<HTMLCanvasElement>();
+const priceChartCanvas = ref<HTMLCanvasElement>();
+const volumeChartCanvas = ref<HTMLCanvasElement>();
 const chartInstance = ref<Chart | null>(null);
 const chartType = ref<'price' | 'volume'>('price');
 const loading = ref(false);
+const isCreatingChart = ref(false);
 
 const chartData = computed(() => {
   const _stock = stock.value;
@@ -259,83 +243,134 @@ const closeDialog = () => {
 
 const destroyChart = () => {
   if (chartInstance.value) {
-    chartInstance.value.destroy();
-    chartInstance.value = null;
+    try {
+      chartInstance.value.destroy();
+      console.log('[StockDetailDialog] 圖表已銷毀');
+    } catch (error) {
+      console.warn('[StockDetailDialog] 銷毀圖表時出現警告:', error);
+    } finally {
+      chartInstance.value = null;
+    }
   }
 };
 
 const createChart = async () => {
-  if (!chartCanvas.value || !chartData.value?.history) return;
-
-  await nextTick();
-  destroyChart();
-
-  const ctx = chartCanvas.value.getContext('2d');
-  if (!ctx) return;
-
-  const history = chartData.value.history;
-  const labels = history.map(item => item.time);
+  // 防止重複創建
+  if (isCreatingChart.value) return;
   
-  const datasets = chartType.value === 'price' 
-    ? [{
-      label: '股價',
-      data: history.map(item => item.price),
-      borderColor: '#1976d2',
-      backgroundColor: 'rgba(25, 118, 210, 0.1)',
-      borderWidth: 2,
-      fill: true,
-      tension: 0.1
-    }]
-    : [{
-      label: '成交量',
-      data: history.map(item => item.volume),
-      backgroundColor: '#1976d2',
-      borderColor: '#1976d2',
-      borderWidth: 1
-    }];
+  // 驗證必要資料
+  if (!chartData.value?.history || !Array.isArray(chartData.value.history) || chartData.value.history.length === 0) {
+    console.warn('[StockDetailDialog] 無有效圖表資料');
+    return;
+  }
 
-  chartInstance.value = new Chart(ctx, {
-    type: chartType.value === 'price' ? 'line' : 'bar',
-    data: {
-      labels,
-      datasets
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: {
-          title: {
-            display: true,
-            text: '時間'
-          }
-        },
-        y: {
-          title: {
-            display: true,
-            text: chartType.value === 'price' ? '股價 (NT$)' : '成交量'
-          }
-        }
+  isCreatingChart.value = true;
+  
+  try {
+    await nextTick();
+    
+    // 先銷毀舊圖表
+    destroyChart();
+    
+    // 根據圖表類型選擇正確的 canvas
+    const canvas = chartType.value === 'price' ? priceChartCanvas.value : volumeChartCanvas.value;
+    if (!canvas) {
+      console.warn('[StockDetailDialog] Canvas 元素未找到');
+      return;
+    }
+
+    // 清理 canvas 上的所有 Chart.js 相關屬性
+    const existingChart = Chart.getChart(canvas);
+    if (existingChart) {
+      console.warn('[StockDetailDialog] 發現現有圖表，強制銷毀');
+      existingChart.destroy();
+    }
+
+    // 重置 canvas 尺寸強制清理
+    const { width, height } = canvas.getBoundingClientRect();
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.warn('[StockDetailDialog] 無法取得 Canvas 2D Context');
+      return;
+    }
+
+    // 清空 canvas 內容
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const history = chartData.value.history;
+    const labels = history.map(item => item.time);
+    
+    const datasets = chartType.value === 'price' 
+      ? [{
+        label: '股價',
+        data: history.map(item => item.price),
+        borderColor: '#1976d2',
+        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.1
+      }]
+      : [{
+        label: '成交量',
+        data: history.map(item => item.volume || 0),
+        backgroundColor: '#1976d2',
+        borderColor: '#1976d2',
+        borderWidth: 1
+      }];
+
+    chartInstance.value = new Chart(ctx, {
+      type: chartType.value === 'price' ? 'line' : 'bar',
+      data: {
+        labels,
+        datasets
       },
-      plugins: {
-        title: {
-          display: true,
-          text: `${stock.value?.name} (${stock.value?.code}) - ${
-            chartType.value === 'price' ? '價格走勢' : '成交量'
-          }`
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: '時間'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: chartType.value === 'price' ? '股價 (NT$)' : '成交量'
+            }
+          }
         },
-        tooltip: {
-          mode: 'index',
+        plugins: {
+          title: {
+            display: true,
+            text: `${stock.value?.name} (${stock.value?.code}) - ${
+              chartType.value === 'price' ? '價格走勢' : '成交量'
+            }`
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false
+          }
+        },
+        interaction: {
+          mode: 'nearest',
+          axis: 'x',
           intersect: false
         }
-      },
-      interaction: {
-        mode: 'nearest',
-        axis: 'x',
-        intersect: false
       }
-    }
-  });
+    });
+    
+    console.log('[StockDetailDialog] 圖表創建成功', chartType.value);
+    
+  } catch (error) {
+    console.error('[StockDetailDialog] 創建圖表失敗:', error);
+  } finally {
+    isCreatingChart.value = false;
+  }
 };
 
 // 載入圖表資料
@@ -371,18 +406,23 @@ const getChangeIcon = (change: number): string => {
 watch(showDialog, (newValue) => {
   if (newValue && stock.value) {
     loadChartData();
+  } else {
+    // 對話框關閉時重置圖表類型
+    chartType.value = 'price';
   }
 });
 
-watch(chartType, () => {
-  if (hasChartData.value) {
-    createChart();
+watch(chartType, async () => {
+  if (hasChartData.value && !isCreatingChart.value) {
+    // 立即銷毀當前圖表
+    destroyChart();
+    
+    // 等待 DOM 更新和圖表完全銷毀
+    await nextTick();
+    setTimeout(() => {
+      createChart();
+    }, 100); // 增加延遲確保圖表完全清理
   }
-});
-
-// 清理
-onUnmounted(() => {
-  destroyChart();
 });
 </script>
 

@@ -1,8 +1,8 @@
 import { twseApiService } from './TWSEApiService';
 import { useStockStore } from '@/composables/useStockStore';
-import { CACHE_CONFIG } from '@/constants';
+import { INTERVAL_SECONDS } from '@/constants';
 import type { ProcessedStockInfo } from '@/types/twse-api';
-import type { StockInfo } from '@/types/stock';
+import { useStockApi } from '@/composables/useStockApi';
 
 /**
  * 股票資料統一管理服務 - Singleton
@@ -13,24 +13,6 @@ class StockDataService {
   private pendingRequests = new Map<string, Promise<ProcessedStockInfo | null>>();
   private batchRequests = new Map<string, { codes: string[]; promise: Promise<ProcessedStockInfo[]> }>();
   private lastUpdateTime = new Map<string, number>();
-  
-  // 快取有效期：使用統一常數
-  private readonly CACHE_DURATION = CACHE_CONFIG.STOCK_DATA_DURATION;
-  
-  /**
-   * 轉換 ProcessedStockInfo 為 StockInfo
-   */
-  private transformToStockInfo(processed: ProcessedStockInfo): StockInfo {
-    return {
-      code: processed.code,
-      name: processed.name,
-      price: processed.currentPrice,
-      change: processed.change,
-      changePercent: processed.changePercent,
-      volume: processed.totalVolume,
-      updatedAt: processed.updatedAt
-    };
-  }
 
   /**
    * 檢查快取是否有效
@@ -39,7 +21,7 @@ class StockDataService {
     const lastUpdate = this.lastUpdateTime.get(stockCode);
     if (!lastUpdate) return false;
     
-    return (Date.now() - lastUpdate) < this.CACHE_DURATION;
+    return (Date.now() - lastUpdate) < INTERVAL_SECONDS;
   }
 
   /**
@@ -53,7 +35,7 @@ class StockDataService {
       return {
         code: cachedData.code,
         name: cachedData.name,
-        currentPrice: cachedData.price,
+        currentPrice: cachedData.currentPrice,
         yesterdayPrice: 0, // 從 StockInfo 無法取得
         openPrice: 0,
         highPrice: 0,
@@ -110,7 +92,7 @@ class StockDataService {
         cachedResults.push({
           code: cachedData.code,
           name: cachedData.name,
-          currentPrice: cachedData.price,
+          currentPrice: cachedData.currentPrice,
           yesterdayPrice: 0,
           openPrice: 0,
           highPrice: 0,
@@ -187,7 +169,8 @@ class StockDataService {
    * 更新快取
    */
   private updateCache(stockInfos: ProcessedStockInfo[]): void {
-    const stockInfosForStore = stockInfos.map(info => this.transformToStockInfo(info));
+    const {transformToStockInfo} = useStockApi();
+    const stockInfosForStore = stockInfos.map(info => transformToStockInfo(info));
     this.stockStore.updateStockData(stockInfosForStore);
     
     // 更新時間戳

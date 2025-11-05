@@ -65,7 +65,7 @@ export interface ProcessedStockInfo {
   totalVolume: number;    // 總成交量
   tradingDate: string;    // 交易日期
   tradingTime: string;    // 交易時間
-  updatedAt: string;      // 更新時間 (ISO string)
+  timestamp: number;      // 更新時間 (timestamp long)
 }
 
 // API 錯誤回應

@@ -30,7 +30,7 @@ class TWSEApiService {
       totalVolume: parseInt(rawData.tv) || 0,
       tradingDate: rawData.d || '',
       tradingTime: rawData.t || '',
-      updatedAt: new Date().toISOString()
+      timestamp: parseInt(rawData.tlong) || 0
     };
   }
 

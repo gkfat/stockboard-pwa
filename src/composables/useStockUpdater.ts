@@ -3,7 +3,7 @@ import { useStockStore } from './useStockStore';
 import { useWatchlistState } from './useWatchlistState';
 import { useMarketTime } from './useMarketTime';
 import { useStockPriceHistory } from './useStockPriceHistory';
-import { CACHE_CONFIG } from '@/constants';
+import { INTERVAL_SECONDS } from '@/constants';
 
 // 全域單例狀態，防止重複註冊 interval
 let updaterInterval: ReturnType<typeof setInterval> | null = null;
@@ -17,7 +17,6 @@ export function useStockUpdater() {
   const { stockCodes } = useWatchlistState();
   const { isMarketOpen } = useMarketTime();
   const { savePriceHistory } = useStockPriceHistory();
-
 
   // 更新所有自選股報價
   const updateAllStocks = async () => {
@@ -74,7 +73,7 @@ export function useStockUpdater() {
       } else {
         console.log('[StockUpdater] 📝 觀察清單為空，跳過更新');
       }
-    }, CACHE_CONFIG.STOCK_DATA_DURATION);
+    }, INTERVAL_SECONDS);
   };
 
   // 停止自動更新
