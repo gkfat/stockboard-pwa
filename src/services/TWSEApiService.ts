@@ -6,6 +6,7 @@ import type {
   ProcessedStockInfo,
   TWStockApiError 
 } from '@/types/twse-api';
+import { DateUtils } from '@/utils/dateUtils';
 
 class TWSEApiService {
   /**
@@ -22,9 +23,10 @@ class TWSEApiService {
 
       // 按日期和時間排序，取最新的一筆
       const sortedHistory = history.sort((a, b) => {
-        const dateTimeA = `${a.date} ${a.time}`;
-        const dateTimeB = `${b.date} ${b.time}`;
-        return dateTimeB.localeCompare(dateTimeA); // 降序排列
+        const dateTimeA = DateUtils.createDate(`${a.date} ${a.time}`);
+        const dateTimeB = DateUtils.createDate(`${b.date} ${b.time}`);
+
+        return dateTimeB.isAfter(dateTimeA) ? 1 : -1;
       });
 
       const latestRecord = sortedHistory[0];
@@ -40,19 +42,20 @@ class TWSEApiService {
    * 將 TWSE 原始資料轉換為處理後的股票資訊
    */
   private transformStockData(rawData: TWStockData): ProcessedStockInfo {
-    console.log(rawData.c, rawData.z, rawData.y);
     const yesterdayPrice = parseFloat(rawData.y) || 0;
-    let currentPrice = parseFloat(rawData.z) || -1;
-    
-    // 如果 currentPrice 為 -1，嘗試從歷史價格中取得最新資料
-    if (currentPrice === -1) {
-      const historyPrice = this.getLatestPriceFromHistory(rawData.c);
+    const historyPrice = this.getLatestPriceFromHistory(rawData.c);
+    let currentPrice = yesterdayPrice;
+
+    // rawData.z 若為 "-" 表示沒有漲跌, 使用歷史價格或昨收
+    if (rawData.z !== '-') {
+      currentPrice = parseFloat(rawData.z);
+    } else {
       if (historyPrice !== null && historyPrice > 0) {
         currentPrice = historyPrice;
-      } else {
-        currentPrice = yesterdayPrice;
       }
     }
+    
+    console.log(rawData.c, rawData.z, currentPrice, yesterdayPrice, historyPrice);
     
     const change = currentPrice > 0 ? currentPrice - yesterdayPrice : 0;
     const changePercent = yesterdayPrice > 0 && currentPrice > 0 ? (change / yesterdayPrice) * 100 : 0;

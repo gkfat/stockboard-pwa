@@ -17,7 +17,7 @@ export const TAIWAN_STOCK_MARKET = {
 
 // 快取設定
 /** 股票資料快取有效期：30 秒 */
-export const INTERVAL_SECONDS = 5 * 1000;
+export const INTERVAL_SECONDS = 10 * 1000;
 
 // 時間相關常數
 export const TIME_CONSTANTS = {

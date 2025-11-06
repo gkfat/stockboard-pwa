@@ -122,8 +122,6 @@ export function useStockPriceHistory() {
 
         if (!existing) {
           uniqueRecords.push(record);
-        } else {
-          console.log(`[StockPriceHistory] 跳過重複資料: ${record.code} ${record.date} ${record.time}`);
         }
       }
 
@@ -147,8 +145,6 @@ export function useStockPriceHistory() {
             priceHistories.value[record.code].push(record);
           }
         });
-      } else {
-        console.log('[StockPriceHistory] 所有資料均為重複，未儲存新記錄');
       }
 
       return {
@@ -184,8 +180,6 @@ export function useStockPriceHistory() {
       // 若未傳入日期，則使用前 3 天作為預設值
       const targetDate = cutoffDate || DateUtils.now().subtract(3, 'day').format('YYYY-MM-DD');
       
-      console.log(`[StockPriceHistory] 開始清除 ${targetDate} 之前的歷史資料`);
-      
       // 使用現有的 deleteOldRecords 方法清除資料庫中的舊資料
       const deletedCount = await priceOps.deleteOldRecords(targetDate);
       
@@ -195,8 +189,10 @@ export function useStockPriceHistory() {
           record => record.date >= targetDate
         );
       });
-      
-      console.log(`[StockPriceHistory] 成功清除 ${deletedCount} 筆 ${targetDate} 之前的歷史資料`);
+
+      if (deletedCount > 0) {
+        console.log(`[StockPriceHistory] 成功清除 ${deletedCount} 筆 ${targetDate} 之前的歷史資料`);
+      }
       
       return {
         success: true,

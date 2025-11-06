@@ -21,8 +21,6 @@ class StockDataService {
     const lastUpdate = this.lastUpdateTime.get(stockCode);
     if (!lastUpdate) return false;
 
-    console.log(Date.now() - lastUpdate);
-    
     return (Date.now() - lastUpdate) < INTERVAL_SECONDS;
   }
 
