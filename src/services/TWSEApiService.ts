@@ -1,4 +1,5 @@
 import { axiosAgent } from './axiosAgent';
+import { useStockPriceHistory } from '@/composables/useStockPriceHistory';
 import type { 
   TWStockApiResponse, 
   TWStockData, 
@@ -8,13 +9,53 @@ import type {
 
 class TWSEApiService {
   /**
+   * 從歷史價格中取得最新價格
+   */
+  private getLatestPriceFromHistory(stockCode: string): number | null {
+    try {
+      const { priceHistories } = useStockPriceHistory();
+      const history = priceHistories.value[stockCode];
+      
+      if (!history || history.length === 0) {
+        return null;
+      }
+
+      // 按日期和時間排序，取最新的一筆
+      const sortedHistory = history.sort((a, b) => {
+        const dateTimeA = `${a.date} ${a.time}`;
+        const dateTimeB = `${b.date} ${b.time}`;
+        return dateTimeB.localeCompare(dateTimeA); // 降序排列
+      });
+
+      const latestRecord = sortedHistory[0];
+      
+      return latestRecord.price;
+    } catch (error) {
+      console.warn(`[TWSEApiService] ⚠️ 無法從歷史價格取得 ${stockCode} 資料:`, error);
+      return null;
+    }
+  }
+
+  /**
    * 將 TWSE 原始資料轉換為處理後的股票資訊
    */
   private transformStockData(rawData: TWStockData): ProcessedStockInfo {
+    console.log(rawData.c, rawData.z, rawData.y);
     const yesterdayPrice = parseFloat(rawData.y) || 0;
-    const currentPrice = parseFloat(rawData.z) || yesterdayPrice || 0;
-    const change = currentPrice - yesterdayPrice;
-    const changePercent = yesterdayPrice > 0 ? (change / yesterdayPrice) * 100 : 0;
+    let currentPrice = parseFloat(rawData.z) || -1;
+    
+    // 如果 currentPrice 為 -1，嘗試從歷史價格中取得最新資料
+    if (currentPrice === -1) {
+      const historyPrice = this.getLatestPriceFromHistory(rawData.c);
+      if (historyPrice !== null && historyPrice > 0) {
+        currentPrice = historyPrice;
+      } else {
+        currentPrice = yesterdayPrice;
+      }
+    }
+    
+    const change = currentPrice > 0 ? currentPrice - yesterdayPrice : 0;
+    const changePercent = yesterdayPrice > 0 && currentPrice > 0 ? (change / yesterdayPrice) * 100 : 0;
 
     return {
       code: rawData.c,

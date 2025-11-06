@@ -20,6 +20,8 @@ class StockDataService {
   private isCacheValid(stockCode: string): boolean {
     const lastUpdate = this.lastUpdateTime.get(stockCode);
     if (!lastUpdate) return false;
+
+    console.log(Date.now() - lastUpdate);
     
     return (Date.now() - lastUpdate) < INTERVAL_SECONDS;
   }
@@ -80,40 +82,42 @@ class StockDataService {
 
     // 去重複
     const uniqueCodes = [...new Set(stockCodes)];
+    const cachedResults: ProcessedStockInfo[] = [];
+    const needUpdate = Array.from(uniqueCodes);
     
     // 分離需要更新和可以使用快取的股票
-    const needUpdate: string[] = [];
-    const cachedResults: ProcessedStockInfo[] = [];
+    // const needUpdate: string[] = [];
+    // const cachedResults: ProcessedStockInfo[] = [];
 
-    uniqueCodes.forEach(code => {
-      const cachedData = this.stockStore.getStockData(code);
-      if (cachedData && this.isCacheValid(code)) {
-        console.log(`[StockDataService] 🎯 使用快取資料: ${code}`);
-        cachedResults.push({
-          code: cachedData.code,
-          name: cachedData.name,
-          currentPrice: cachedData.currentPrice,
-          yesterdayPrice: 0,
-          openPrice: 0,
-          highPrice: 0,
-          lowPrice: 0,
-          change: cachedData.change,
-          changePercent: cachedData.changePercent,
-          volume: 0,
-          totalVolume: cachedData.volume,
-          tradingDate: '',
-          tradingTime: '',
-          timestamp: new Date(cachedData.updatedAt).getTime()
-        });
-      } else {
-        needUpdate.push(code);
-      }
-    });
+    // uniqueCodes.forEach(code => {
+    //   const cachedData = this.stockStore.getStockData(code);
+    //   if (cachedData && this.isCacheValid(code)) {
+    //     console.log(`[StockDataService] 🎯 使用快取資料: ${code}`);
+    //     cachedResults.push({
+    //       code: cachedData.code,
+    //       name: cachedData.name,
+    //       currentPrice: cachedData.currentPrice,
+    //       yesterdayPrice: 0,
+    //       openPrice: 0,
+    //       highPrice: 0,
+    //       lowPrice: 0,
+    //       change: cachedData.change,
+    //       changePercent: cachedData.changePercent,
+    //       volume: 0,
+    //       totalVolume: cachedData.volume,
+    //       tradingDate: '',
+    //       tradingTime: '',
+    //       timestamp: new Date(cachedData.updatedAt).getTime()
+    //     });
+    //   } else {
+    //     needUpdate.push(code);
+    //   }
+    // });
 
     // 如果沒有需要更新的股票，直接回傳快取結果
-    if (needUpdate.length === 0) {
-      return cachedResults;
-    }
+    // if (needUpdate.length === 0) {
+    //   return cachedResults;
+    // }
 
     // 建立批量請求 key
     const batchKey = needUpdate.sort().join(',');
