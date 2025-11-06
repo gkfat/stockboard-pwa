@@ -1,5 +1,6 @@
 import { axiosAgent } from './axiosAgent';
 import { useStockPriceHistory } from '@/composables/useStockPriceHistory';
+import { db } from '@/db/stockDB';
 import type { 
   TWStockApiResponse, 
   TWStockData, 
@@ -41,21 +42,39 @@ class TWSEApiService {
   /**
    * 將 TWSE 原始資料轉換為處理後的股票資訊
    */
-  private transformStockData(rawData: TWStockData): ProcessedStockInfo {
+  private async transformStockData(rawData: TWStockData): Promise<ProcessedStockInfo> {
     const yesterdayPrice = parseFloat(rawData.y) || 0;
-    const historyPrice = this.getLatestPriceFromHistory(rawData.c);
     let currentPrice = yesterdayPrice;
 
-    // rawData.z 若為 "-" 表示沒有漲跌, 使用歷史價格或昨收
+    // rawData.z 若為 "-" 表示沒有漲跌, 否則更新最新價格到資料庫
     if (rawData.z !== '-') {
       currentPrice = parseFloat(rawData.z);
+      
+      // 當價格有效時，更新最新價格到資料庫
+      if (!isNaN(currentPrice) && currentPrice > 0) {
+        try {
+          await db.updateLatestPrice(rawData.c, currentPrice);
+        } catch (error) {
+          console.warn(`[TWSEApiService] ⚠️ 更新 ${rawData.c} 最新價格失敗:`, error);
+        }
+      }
     } else {
-      if (historyPrice !== null && historyPrice > 0) {
-        currentPrice = historyPrice;
+      // 如果當前沒有價格，嘗試從資料庫最新價格取得
+      try {
+        const latestPrice = await db.getLatestPrice(rawData.c);
+        if (latestPrice && latestPrice.price > 0) {
+          currentPrice = latestPrice.price;
+        } else {
+          // 如果資料庫也沒有，再嘗試從歷史價格中取得
+          const historyPrice = this.getLatestPriceFromHistory(rawData.c);
+          if (historyPrice !== null && historyPrice > 0) {
+            currentPrice = historyPrice;
+          }
+        }
+      } catch (error) {
+        console.warn(`[TWSEApiService] ⚠️ 取得 ${rawData.c} 最新價格失敗:`, error);
       }
     }
-    
-    console.log(rawData.c, rawData.z, currentPrice, yesterdayPrice, historyPrice);
     
     const change = currentPrice > 0 ? currentPrice - yesterdayPrice : 0;
     const changePercent = yesterdayPrice > 0 && currentPrice > 0 ? (change / yesterdayPrice) * 100 : 0;
@@ -120,7 +139,7 @@ class TWSEApiService {
         throw new Error(`查無股票代號: ${stockCode}`);
       }
 
-      const stockData = this.transformStockData(response.data.msgArray[0]);
+      const stockData = await this.transformStockData(response.data.msgArray[0]);
       
       return stockData;
     } catch (error) {
@@ -151,7 +170,9 @@ class TWSEApiService {
         return [];
       }
 
-      const stockInfos = response.data.msgArray.map(data => this.transformStockData(data));
+      const stockInfos = await Promise.all(
+        response.data.msgArray.map(data => this.transformStockData(data))
+      );
    
       return stockInfos;
     } catch (error) {

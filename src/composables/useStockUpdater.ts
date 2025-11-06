@@ -3,6 +3,7 @@ import { useStockStore } from './useStockStore';
 import { useWatchlistState } from './useWatchlistState';
 import { useMarketTime } from './useMarketTime';
 import { useStockPriceHistory } from './useStockPriceHistory';
+import { db } from '@/db/stockDB';
 import { INTERVAL_SECONDS } from '@/constants';
 
 // 全域單例狀態，防止重複註冊 interval
@@ -18,6 +19,43 @@ export function useStockUpdater() {
   const { isMarketOpen } = useMarketTime();
   const { savePriceHistory } = useStockPriceHistory();
 
+  // 回填初始價格（當 API 價格為 -1 時）
+  const backfillInitialPrices = async (stockInfos: any[]) => {
+    const updatedStockInfos = [];
+    
+    for (const stock of stockInfos) {
+      if (stock.currentPrice === -1) {
+        try {
+          // 嘗試從資料庫取得最新價格
+          const latestPrice = await db.getLatestPrice(stock.code);
+          if (latestPrice && latestPrice.price > 0) {
+            const updatedStock = {
+              ...stock,
+              currentPrice: latestPrice.price,
+              change: latestPrice.price - stock.yesterdayPrice,
+              changePercent: stock.yesterdayPrice > 0 
+                ? ((latestPrice.price - stock.yesterdayPrice) / stock.yesterdayPrice) * 100 
+                : 0
+            };
+            
+            console.log(`[StockUpdater] 🔄 ${stock.code} 使用資料庫最新價格: ${latestPrice.price} (${latestPrice.updatedAt})`);
+            updatedStockInfos.push(updatedStock);
+          } else {
+            console.log(`[StockUpdater] ⚠️ ${stock.code} 無法取得最新價格，保持 -1`);
+            updatedStockInfos.push(stock);
+          }
+        } catch (error) {
+          console.warn(`[StockUpdater] ⚠️ 回填 ${stock.code} 價格失敗:`, error);
+          updatedStockInfos.push(stock);
+        }
+      } else {
+        updatedStockInfos.push(stock);
+      }
+    }
+    
+    return updatedStockInfos;
+  };
+
   // 更新所有自選股報價
   const updateAllStocks = async () => {
     if (isUpdating.value) return;
@@ -28,9 +66,10 @@ export function useStockUpdater() {
     setUpdatingState(true, null);
 
     try {
-      console.log('[StockUpdater] 更新一次所有股票資料');
+      let stockInfos = await fetchMultipleStocks(codes);
       
-      const stockInfos = await fetchMultipleStocks(codes);
+      // 回填初始價格（當 API 價格為 -1 時使用資料庫最新價格）
+      stockInfos = await backfillInitialPrices(stockInfos);
       
       // 立即更新股票資訊供 UI 顯示
       updateStockData(stockInfos);

@@ -5,7 +5,7 @@
 /**
  * 資料庫型別辨識
  */
-export type DbType = 'watchlist' | 'prices';
+export type DbType = 'watchlist' | 'prices' | 'latestPrices';
 
 /**
  * 觀察清單
@@ -26,6 +26,15 @@ export interface HistoryPrice {
   time: string; // 時間
   price: number; // 價格
   volume: number; // 成交量
+}
+
+/**
+ * 最新價格記錄
+ */
+export interface LatestPrice {
+  code: string; // 股票代號，主鍵
+  price: number; // 最新價格
+  updatedAt: string; // 更新時間，ISO 格式
 }
 
 /**
@@ -62,6 +71,7 @@ export interface WatchlistQueryParams {
 export interface DbTableTypes {
   watchlist: WatchListItem;
   prices: HistoryPrice;
+  latestPrices: LatestPrice;
 }
 
 /**

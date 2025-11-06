@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import type { WatchListItem, HistoryPrice } from '@/types/db';
+import type { WatchListItem, HistoryPrice, LatestPrice } from '@/types/db';
 import type { TradeRecord } from '@/types/trading';
 
 // DB 操作 Logger
@@ -7,7 +7,7 @@ class DBLogger {
   private prefix = '[StockDB]';
   
   log(operation: string, data?: any) {
-    console.log(`${this.prefix} ${operation}`, data || '');
+    // console.log(`${this.prefix} ${operation}`, data || '');
   }
   
   error(operation: string, error: any) {
@@ -21,6 +21,7 @@ export class StockDB extends Dexie {
   watchlist!: Table<WatchListItem, string>;
   prices!: Table<HistoryPrice, number>;
   trades!: Table<TradeRecord, string>;
+  latestPrices!: Table<LatestPrice, string>;
 
   constructor() {
     super('StockDB');
@@ -49,6 +50,14 @@ export class StockDB extends Dexie {
           record.index = index++;
         }
       });
+    });
+    
+    // 新增最新價格表
+    this.version(4).stores({
+      watchlist: '&code, name, index',
+      prices: '++id, code, time, date',
+      trades: '++id, ticker, traded_at, direction, created_at',
+      latestPrices: '&code, price, updatedAt'
     });
     
     // 簡單的初始化日誌
@@ -124,6 +133,61 @@ export class StockDB extends Dexie {
       logger.log('Trade deleted successfully', id);
     } catch (error) {
       logger.error('deleteTrade', error);
+      throw error;
+    }
+  }
+
+  // 最新價格相關方法
+  async updateLatestPrice(code: string, price: number): Promise<void> {
+    try {
+      logger.log('Updating latest price', { code, price });
+      
+      const latestPrice: LatestPrice = {
+        code,
+        price,
+        updatedAt: new Date().toISOString()
+      };
+      
+      await this.latestPrices.put(latestPrice);
+      logger.log('Latest price updated successfully', latestPrice);
+    } catch (error) {
+      logger.error('updateLatestPrice', error);
+      throw error;
+    }
+  }
+
+  async getLatestPrice(code: string): Promise<LatestPrice | undefined> {
+    try {
+      logger.log('Getting latest price', code);
+      const result = await this.latestPrices.get(code);
+      return result;
+    } catch (error) {
+      logger.error('getLatestPrice', error);
+      throw error;
+    }
+  }
+
+  async getAllLatestPrices(): Promise<LatestPrice[]> {
+    try {
+      logger.log('Getting all latest prices');
+      const prices = await this.latestPrices.toArray();
+      return prices;
+    } catch (error) {
+      logger.error('getAllLatestPrices', error);
+      throw error;
+    }
+  }
+
+  async getLatestPricesByCodes(codes: string[]): Promise<LatestPrice[]> {
+    try {
+      logger.log('Getting latest prices by codes', codes);
+      const prices = await this.latestPrices
+        .where('code')
+        .anyOf(codes)
+        .toArray();
+      return prices;
+    } catch (error) {
+      logger.error('getLatestPricesByCodes', error);
       throw error;
     }
   }
