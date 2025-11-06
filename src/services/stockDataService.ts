@@ -46,7 +46,7 @@ class StockDataService {
         totalVolume: cachedData.volume,
         tradingDate: '',
         tradingTime: '',
-        updatedAt: cachedData.updatedAt
+        timestamp: new Date(cachedData.updatedAt).getTime()
       };
     }
 
@@ -103,7 +103,7 @@ class StockDataService {
           totalVolume: cachedData.volume,
           tradingDate: '',
           tradingTime: '',
-          updatedAt: cachedData.updatedAt
+          timestamp: new Date(cachedData.updatedAt).getTime()
         });
       } else {
         needUpdate.push(code);
